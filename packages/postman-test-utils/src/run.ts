@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { resolveSecrets, reveal } from "@simpsonm09/postman-secrets";
-import type { ResolvedBinding } from "@simpsonm09/postman-secrets";
 import { validationHelpers } from "@simpsonm09/postman-request-validation";
+import type { ResolvedBinding } from "@simpsonm09/postman-secrets";
+import { resolveSecrets, reveal } from "@simpsonm09/postman-secrets";
 import { InvalidRunRequestError } from "./errors.js";
 import { normalizeRunRequest } from "./normalize.js";
 import { runNewman } from "./runners/newman.js";
@@ -14,8 +14,8 @@ import type {
   PreparedRunRequest,
   RunRequest,
   RunResult,
-  VariablesSource,
   ValidationRequest,
+  VariablesSource,
 } from "./types.js";
 
 /**

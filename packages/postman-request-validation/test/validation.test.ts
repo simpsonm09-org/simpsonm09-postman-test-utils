@@ -72,7 +72,9 @@ function createExpect() {
         return api;
       },
       an(kind: string) {
-        assert(kind === "array" ? Array.isArray(actual) : typeof actual === kind);
+        assert(
+          kind === "array" ? Array.isArray(actual) : typeof actual === kind,
+        );
         return api;
       },
       jsonSchema(schema: unknown) {
@@ -107,12 +109,14 @@ function createExpect() {
   return expect;
 }
 
-function createPm(options: {
-  status?: number;
-  body?: unknown;
-  text?: string;
-  contentType?: string;
-} = {}) {
+function createPm(
+  options: {
+    status?: number;
+    body?: unknown;
+    text?: string;
+    contentType?: string;
+  } = {},
+) {
   const status = options.status ?? 200;
   const contentType = options.contentType ?? "application/json";
   const body = options.body;
@@ -164,7 +168,8 @@ function createPm(options: {
     expect: createExpect(),
     test,
     variables: {
-      get: (key: string) => environment.get(key) ?? collectionVariables.get(key),
+      get: (key: string) =>
+        environment.get(key) ?? collectionVariables.get(key),
     },
     environment: {
       get: (key: string) => environment.get(key),
@@ -193,9 +198,9 @@ describe("request-validation suite", () => {
       },
     });
     expect(tests.every((test) => test.ok)).toBe(true);
-    expect(tests.some((test) => test.name.includes("one of expected statuses"))).toBe(
-      true,
-    );
+    expect(
+      tests.some((test) => test.name.includes("one of expected statuses")),
+    ).toBe(true);
   });
 
   it("fails a mismatched value", () => {
@@ -256,14 +261,20 @@ describe("request-validation suite", () => {
   });
 
   it("saves response values into the environment", () => {
-    const { pm, environment } = createPm({ body: { linkRoot: { linkId: "abc" } } });
+    const { pm, environment } = createPm({
+      body: { linkRoot: { linkId: "abc" } },
+    });
     (globalThis as { pm?: unknown }).pm = pm;
     createRequestValidationSuite().execute({
       SCENARIO: {
         response: { kind: "json", expect: {} },
         variables: {
           save: [
-            { scope: "environment", variable: "linkId", source: "linkRoot.linkId" },
+            {
+              scope: "environment",
+              variable: "linkId",
+              source: "linkRoot.linkId",
+            },
           ],
         },
       },
@@ -299,10 +310,9 @@ describe("validationHelpers", () => {
     expect(helpers[0].body).not.toContain("node:");
 
     const pm = { test: () => {}, testUtils: undefined };
-    const evaluate = new Function(
-      "pm",
-      `return ${helpers[0].body};`,
-    ) as (pm: unknown) => { execute: unknown };
+    const evaluate = new Function("pm", `return ${helpers[0].body};`) as (
+      pm: unknown,
+    ) => { execute: unknown };
     const suite = evaluate(pm);
     expect(typeof suite.execute).toBe("function");
   });

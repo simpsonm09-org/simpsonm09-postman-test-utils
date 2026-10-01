@@ -7,7 +7,11 @@ export type SecretValue = string & { readonly __brand: "SecretValue" };
 
 export type SecretRef =
   | { readonly provider: "env"; readonly name: string }
-  | { readonly provider: "vault"; readonly path: string; readonly field: string }
+  | {
+      readonly provider: "vault";
+      readonly path: string;
+      readonly field: string;
+    }
   | {
       readonly provider: "infisical";
       readonly key: string;

@@ -115,7 +115,10 @@ function readBail(value: unknown): boolean | undefined {
 
 function readSecretRef(value: unknown, field: string): SecretRef {
   if (!isRecord(value)) {
-    throw new InvalidRunRequestError(field, "expected a secret reference object");
+    throw new InvalidRunRequestError(
+      field,
+      "expected a secret reference object",
+    );
   }
   const provider = value.provider;
   if (
@@ -163,7 +166,10 @@ function readSecrets(value: unknown): SecretBinding[] {
     return [];
   }
   if (!Array.isArray(value)) {
-    throw new InvalidRunRequestError("secrets", "expected an array of bindings");
+    throw new InvalidRunRequestError(
+      "secrets",
+      "expected an array of bindings",
+    );
   }
   return value.map((entry, index) => {
     const field = `secrets[${index}]`;
@@ -173,8 +179,15 @@ function readSecrets(value: unknown): SecretBinding[] {
     if (typeof entry.variable !== "string" || entry.variable === "") {
       throw new InvalidRunRequestError(field, "expected a variable name");
     }
-    if (entry.scope !== undefined && entry.scope !== "environment" && entry.scope !== "globals") {
-      throw new InvalidRunRequestError(field, "expected a scope of environment or globals");
+    if (
+      entry.scope !== undefined &&
+      entry.scope !== "environment" &&
+      entry.scope !== "globals"
+    ) {
+      throw new InvalidRunRequestError(
+        field,
+        "expected a scope of environment or globals",
+      );
     }
     return {
       variable: entry.variable,

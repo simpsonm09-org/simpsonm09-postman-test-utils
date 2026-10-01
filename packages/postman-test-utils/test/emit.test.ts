@@ -40,7 +40,9 @@ describe("emitCollection", () => {
       { collection, validation: { suite: "request-validation" } },
       path,
     );
-    const written = JSON.parse(await readFile(path, "utf8")) as PostmanCollection;
+    const written = JSON.parse(
+      await readFile(path, "utf8"),
+    ) as PostmanCollection;
     const exec = written.item[0].event?.[0].script?.exec ?? [];
     expect(exec[0]).toContain("requestValidation");
     expect(exec[1]).toBe("pm.test('ok', function () {});");
@@ -53,7 +55,10 @@ describe("emitCollection", () => {
       {
         collection,
         secrets: [
-          { variable: "token", secret: { provider: "env", name: "PTU_EMIT_SECRET" } },
+          {
+            variable: "token",
+            secret: { provider: "env", name: "PTU_EMIT_SECRET" },
+          },
         ],
       },
       path,
@@ -64,7 +69,9 @@ describe("emitCollection", () => {
   it("writes a plain collection when validation is not requested", async () => {
     const path = await emitPath();
     await emitCollection({ collection }, path);
-    const written = JSON.parse(await readFile(path, "utf8")) as PostmanCollection;
+    const written = JSON.parse(
+      await readFile(path, "utf8"),
+    ) as PostmanCollection;
     expect(written.item[0].event?.[0].script?.exec).toEqual([
       "pm.test('ok', function () {});",
     ]);

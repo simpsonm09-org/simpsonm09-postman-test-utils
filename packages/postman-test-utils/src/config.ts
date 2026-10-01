@@ -139,9 +139,7 @@ export async function loadRunConfig(options: CliOptions): Promise<RunRequest> {
       : { environment: options.environment }),
     ...(options.globals === undefined ? {} : { globals: options.globals }),
     ...(options.folders.length === 0 ? {} : { folder: options.folders }),
-    ...(options.reporters.length === 0
-      ? {}
-      : { reporters: options.reporters }),
+    ...(options.reporters.length === 0 ? {} : { reporters: options.reporters }),
     ...(options.bail ? { bail: true } : {}),
   };
 }
