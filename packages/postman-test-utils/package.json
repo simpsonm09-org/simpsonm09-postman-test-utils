@@ -1,0 +1,59 @@
+{
+  "name": "postman-test-utils",
+  "version": "0.2.0",
+  "description": "Run Postman v2.1 collections offline through newman, with secret resolution and shared script helpers.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./scripting": {
+      "types": "./dist/scripting.d.ts",
+      "import": "./dist/scripting.js",
+      "default": "./dist/scripting.js"
+    }
+  },
+  "bin": {
+    "postman-test-utils": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/simpsonm09-org/simpsonm09-postman-test-utils.git",
+    "directory": "packages/postman-test-utils"
+  },
+  "homepage": "https://github.com/simpsonm09-org/simpsonm09-postman-test-utils#readme",
+  "bugs": {
+    "url": "https://github.com/simpsonm09-org/simpsonm09-postman-test-utils/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@simpsonm09/postman-request-validation": "^0.2.0",
+    "@simpsonm09/postman-secrets": "^0.2.0"
+  },
+  "peerDependencies": {
+    "newman": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "newman": {
+      "optional": true
+    }
+  }
+}

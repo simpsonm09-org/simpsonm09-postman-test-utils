@@ -1,0 +1,9 @@
+# CVE-2026-73231 in @faker-js/faker 6.3.1.
+#
+# @faker-js/faker is a dev-only transitive of newman: postman-collection@4.4.0
+# pins 5.5.3, and the root override moves it to 6.3.1, the newest
+# CommonJS-compatible release. The fix version 10.5.0 is ESM-only and cannot be
+# require()d by postman-collection, so the pin cannot move. The vulnerable path
+# needs attacker-controlled fake templates; this tool runs collections its own
+# author wrote.
+CVE-2026-73231

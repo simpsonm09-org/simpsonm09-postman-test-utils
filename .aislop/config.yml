@@ -1,0 +1,11 @@
+# aislop configuration. Docs: https://scanaislop.com/docs/configuration
+ci:
+  failBelow: 80
+
+# newman is an optional peer dependency, installed only so the integration test
+# can run. Its transitive tree carries advisories that report as errors with no
+# upstream fix, and aislop resolves them to a newman version that does not exist.
+# The standard's Trivy vulnerability scan is the dependency gate for this
+# repository, so the duplicate aislop audit is off here.
+security:
+  audit: false

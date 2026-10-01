@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/lint.yml@52061d685bfca4cf0c2ac28926acdcb313680bc4 # repo-standard main
+  aislop:
+    permissions:
+      contents: read
+      security-events: write
+    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/aislop.yml@52061d685bfca4cf0c2ac28926acdcb313680bc4 # repo-standard main
+  security:
+    permissions:
+      contents: read
+      security-events: write
+    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/security.yml@52061d685bfca4cf0c2ac28926acdcb313680bc4 # repo-standard main
+  standard:
+    permissions:
+      contents: read
+    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/standard.yml@52061d685bfca4cf0c2ac28926acdcb313680bc4 # repo-standard main
+
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned tools
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify
+        run: npm run verify

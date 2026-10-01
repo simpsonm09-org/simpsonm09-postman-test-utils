@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@simpsonm09/postman-secrets": ["packages/postman-secrets/src/index.ts"],
+      "@simpsonm09/postman-request-validation": ["packages/postman-request-validation/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/src", "packages/*/test", "test"]
+}

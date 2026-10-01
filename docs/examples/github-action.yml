@@ -1,0 +1,27 @@
+# Run a collection offline in GitHub Actions. No Postman cloud, no API key.
+name: postman tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  collection:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Run the collection
+        uses: simpsonm09/simpsonm09-postman-test-utils@v1
+        with:
+          command: '--config ./postman-test-utils.config.json'
+        env:
+          # Values the config binds with { "provider": "env", "name": "..." }.
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+          BASE_URL: ${{ vars.BASE_URL }}

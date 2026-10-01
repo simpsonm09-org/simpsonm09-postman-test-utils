@@ -1,0 +1,10 @@
+{
+  "name": "@simpsonm09/postman-secrets",
+  "version": "0.2.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publish": {
+    "include": ["src/**/*.ts", "README.md", "LICENSE"]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "@simpsonm09/postman-request-validation",
+  "version": "0.2.0",
+  "description": "Declarative Postman response validation for collection scripts, loadable via pm.require or the newman prelude.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/simpsonm09-org/simpsonm09-postman-test-utils.git",
+    "directory": "packages/postman-request-validation"
+  },
+  "homepage": "https://github.com/simpsonm09-org/simpsonm09-postman-test-utils#readme",
+  "bugs": {
+    "url": "https://github.com/simpsonm09-org/simpsonm09-postman-test-utils/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build"
+  }
+}

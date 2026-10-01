@@ -1,0 +1,16 @@
+{
+  "name": "@simpsonm09/postman-test-utils",
+  "version": "0.2.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./scripting": "./src/scripting.ts"
+  },
+  "imports": {
+    "newman": "npm:newman@^6.0.0",
+    "@simpsonm09/postman-secrets": "jsr:@simpsonm09/postman-secrets@^0.2.0",
+    "@simpsonm09/postman-request-validation": "jsr:@simpsonm09/postman-request-validation@^0.2.0"
+  },
+  "publish": {
+    "include": ["src/**/*.ts", "README.md", "LICENSE"]
+  }
+}

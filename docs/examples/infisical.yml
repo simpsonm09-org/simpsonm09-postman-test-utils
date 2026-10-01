@@ -1,0 +1,31 @@
+# Resolve secrets from Infisical before the collection run. The engine reads
+# them through the "env" provider, so the config only names the variables.
+name: postman tests with infisical
+
+on:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  collection:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Fetch secrets from Infisical
+        uses: Infisical/secrets-action@v1
+        with:
+          method: universal
+          env-slug: dev
+          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          identity-id: ${{ secrets.INFISICAL_IDENTITY_ID }}
+
+      - name: Run the collection
+        uses: simpsonm09/simpsonm09-postman-test-utils@v1
+        with:
+          command: '--config ./postman-test-utils.config.json'

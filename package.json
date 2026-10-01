@@ -1,0 +1,39 @@
+{
+  "name": "postman-test-utils-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Workspace for the postman-test-utils packages.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "npm run build -w @simpsonm09/postman-secrets && npm run build -w @simpsonm09/postman-request-validation && npm run build -w postman-test-utils",
+    "test": "vitest run",
+    "verify": "npm run typecheck && npm run build && npm run test",
+    "smoke": "npm run build && node scripts/smoke-install.mjs",
+    "publish:dry-run": "node scripts/publish.mjs",
+    "publish:packages": "node scripts/publish.mjs --publish",
+    "prepublishOnly": "echo \"Publish from packages/* instead.\" && exit 1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "newman": "^6.2.2",
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.0"
+  },
+  "overrides": {
+    "@faker-js/faker": "6.3.1",
+    "flatted": "^3.4.2",
+    "handlebars": "^4.7.9",
+    "lodash": "^4.18.0",
+    "node-forge": "^1.4.0",
+    "qs": "^6.16.0",
+    "underscore": "^1.13.8"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "@simpsonm09/postman-secrets",
+  "version": "0.2.0",
+  "description": "Resolve Postman test secrets from the environment, HashiCorp Vault, or Infisical without writing them to disk.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/simpsonm09-org/simpsonm09-postman-test-utils.git",
+    "directory": "packages/postman-secrets"
+  },
+  "homepage": "https://github.com/simpsonm09-org/simpsonm09-postman-test-utils#readme",
+  "bugs": {
+    "url": "https://github.com/simpsonm09-org/simpsonm09-postman-test-utils/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build"
+  }
+}

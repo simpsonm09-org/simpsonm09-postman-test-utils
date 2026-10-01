@@ -1,0 +1,37 @@
+name: Postman Test Utils
+description: Run a Postman v2.1 collection offline through newman, with in-memory secret resolution and optional request validation.
+
+inputs:
+  command:
+    description: 'CLI arguments after `run`, for example "--config ./postman-test-utils.config.json".'
+    required: true
+  version:
+    description: 'Version of postman-test-utils to install from npm.'
+    required: false
+    default: latest
+  working-directory:
+    description: 'Directory to run the command from.'
+    required: false
+    default: '.'
+
+outputs:
+  exit-code:
+    description: 'The exit code from the collection run.'
+    value: ${{ steps.run.outputs.exit-code }}
+
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        PTU_VERSION: ${{ inputs.version }}
+        PTU_COMMAND: ${{ inputs.command }}
+      run: |
+        set +e
+        npx --yes "postman-test-utils@${PTU_VERSION}" run ${PTU_COMMAND}
+        code=$?
+        set -e
+        echo "exit-code=${code}" >> "$GITHUB_OUTPUT"
+        exit "${code}"
