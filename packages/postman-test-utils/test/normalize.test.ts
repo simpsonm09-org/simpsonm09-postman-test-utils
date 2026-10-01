@@ -38,14 +38,19 @@ describe("normalizeRunRequest", () => {
 
   it("rejects an environment object without a values array", () => {
     expect(() =>
-      normalizeRunRequest({ collection: "./c.json", environment: { name: "x" } }),
+      normalizeRunRequest({
+        collection: "./c.json",
+        environment: { name: "x" },
+      }),
     ).toThrow(InvalidRunRequestError);
   });
 
   it("accepts an env secret binding", () => {
     const normalized = normalizeRunRequest({
       collection: "./c.json",
-      secrets: [{ variable: "token", secret: { provider: "env", name: "TOKEN" } }],
+      secrets: [
+        { variable: "token", secret: { provider: "env", name: "TOKEN" } },
+      ],
     });
     expect(normalized.secrets).toEqual([
       { variable: "token", secret: { provider: "env", name: "TOKEN" } },

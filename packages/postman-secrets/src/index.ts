@@ -1,3 +1,17 @@
+export { envProvider } from "./env.js";
+export { SecretResolutionError } from "./errors.js";
+export {
+  type InfisicalOptions,
+  infisicalProvider,
+  parseDotenvExport,
+} from "./infisical.js";
+export { findExecutable, reveal, toSecretValue } from "./internal.js";
+export {
+  defaultProviders,
+  type ResolveOptions,
+  resolveEnvironment,
+  resolveSecrets,
+} from "./resolve.js";
 export type {
   CommandResult,
   CommandRunner,
@@ -10,18 +24,4 @@ export type {
   SecretScope,
   SecretValue,
 } from "./types.js";
-export { SecretResolutionError } from "./errors.js";
-export { envProvider } from "./env.js";
-export { vaultProvider, parseVaultKvJson, type VaultOptions } from "./vault.js";
-export {
-  infisicalProvider,
-  parseDotenvExport,
-  type InfisicalOptions,
-} from "./infisical.js";
-export {
-  defaultProviders,
-  resolveSecrets,
-  resolveEnvironment,
-  type ResolveOptions,
-} from "./resolve.js";
-export { findExecutable, reveal, toSecretValue } from "./internal.js";
+export { parseVaultKvJson, type VaultOptions, vaultProvider } from "./vault.js";

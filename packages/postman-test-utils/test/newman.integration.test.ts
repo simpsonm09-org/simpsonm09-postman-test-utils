@@ -2,11 +2,14 @@ import { readFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { fileURLToPath } from "node:url";
-import { afterAll, beforeAll, afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { runCollection } from "../src/run.js";
 import type { PostmanCollection } from "../src/types.js";
 
-const fixtureUrl = new URL("./fixtures/health.postman_collection.json", import.meta.url);
+const fixtureUrl = new URL(
+  "./fixtures/health.postman_collection.json",
+  import.meta.url,
+);
 
 async function loadCollection(): Promise<PostmanCollection> {
   return JSON.parse(await readFile(fixtureUrl, "utf8")) as PostmanCollection;
@@ -20,7 +23,10 @@ function collectionWithTest(script: string): PostmanCollection {
         name: "health",
         request: { method: "GET", url: "{{baseUrl}}/health" },
         event: [
-          { listen: "test", script: { type: "text/javascript", exec: [script] } },
+          {
+            listen: "test",
+            script: { type: "text/javascript", exec: [script] },
+          },
         ],
       },
     ],
@@ -48,7 +54,9 @@ describe("runCollection with newman", () => {
       response.writeHead(404);
       response.end();
     });
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const { port } = server.address() as AddressInfo;
     baseUrl = `http://127.0.0.1:${port}`;
   });
@@ -87,7 +95,10 @@ describe("runCollection with newman", () => {
     collection.item[0].event![0].script!.exec = [
       "pm.test('always fails', function () { pm.expect(true).to.be.false; });",
     ];
-    const result = await runCollection({ collection, environment: environment() });
+    const result = await runCollection({
+      collection,
+      environment: environment(),
+    });
     expect(result.success).toBe(false);
     expect(result.stats.failedAssertions).toBe(1);
     expect(result.failures[0].test).toBe("always fails");
@@ -172,7 +183,12 @@ describe("runCollection with newman", () => {
     const result = await runCollection({
       collection,
       environment: environment(),
-      secrets: [{ variable: "token", secret: { provider: "env", name: "PTU_TEST_TOKEN" } }],
+      secrets: [
+        {
+          variable: "token",
+          secret: { provider: "env", name: "PTU_TEST_TOKEN" },
+        },
+      ],
     });
     expect(result.success).toBe(true);
     expect(result.stats.failedAssertions).toBe(0);

@@ -1,7 +1,6 @@
 import { envProvider } from "./env.js";
 import { SecretResolutionError } from "./errors.js";
 import { infisicalProvider } from "./infisical.js";
-import { vaultProvider } from "./vault.js";
 import type {
   ResolvedBinding,
   ResolvedSecrets,
@@ -9,6 +8,7 @@ import type {
   SecretProvider,
   SecretValue,
 } from "./types.js";
+import { vaultProvider } from "./vault.js";
 
 export interface ResolveOptions {
   readonly providers?: readonly SecretProvider[];

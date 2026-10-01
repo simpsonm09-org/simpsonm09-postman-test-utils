@@ -1,4 +1,4 @@
-import { access, readFile, readdir } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 const packagesRoot = new URL("../packages/", import.meta.url);
@@ -21,7 +21,9 @@ async function readJson<T>(url: URL): Promise<T> {
 
 async function packageNames(): Promise<string[]> {
   const entries = await readdir(packagesRoot, { withFileTypes: true });
-  return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+  return entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
 }
 
 describe("workspace packages", () => {
@@ -34,7 +36,9 @@ describe("workspace packages", () => {
       const pkg = await readJson<PackageJson>(
         new URL(`${name}/package.json`, packagesRoot),
       );
-      const jsr = await readJson<JsrJson>(new URL(`${name}/jsr.json`, packagesRoot));
+      const jsr = await readJson<JsrJson>(
+        new URL(`${name}/jsr.json`, packagesRoot),
+      );
       expect(jsr.version, `${name} jsr version`).toBe(pkg.version);
       versions.add(pkg.version);
     }

@@ -12,7 +12,10 @@ function makeCollection(): PostmanCollection {
         name: "req",
         request: { method: "GET", url: "{{baseUrl}}/x" },
         event: [
-          { listen: "test", script: { exec: ["pm.test('a', function () {});"] } },
+          {
+            listen: "test",
+            script: { exec: ["pm.test('a', function () {});"] },
+          },
           { listen: "prerequest", script: { exec: ["console.log('pre');"] } },
         ],
       },
@@ -22,7 +25,10 @@ function makeCollection(): PostmanCollection {
           {
             name: "nested",
             event: [
-              { listen: "test", script: { exec: ["pm.test('nested', function () {});"] } },
+              {
+                listen: "test",
+                script: { exec: ["pm.test('nested', function () {});"] },
+              },
             ],
           },
         ],
@@ -41,7 +47,9 @@ describe("buildHelperPrelude", () => {
   });
 
   it("rejects a helper name that is not a JavaScript identifier", () => {
-    expect(() => buildHelperPrelude([{ name: "bad-name", body: "1" }])).toThrow();
+    expect(() =>
+      buildHelperPrelude([{ name: "bad-name", body: "1" }]),
+    ).toThrow();
   });
 });
 
@@ -70,6 +78,8 @@ describe("withHelpers", () => {
 
   it("leaves listeners that were not requested alone", () => {
     const augmented = withHelpers(makeCollection(), [helper], ["test"]);
-    expect(augmented.item[0].event?.[1].script?.exec).toEqual(["console.log('pre');"]);
+    expect(augmented.item[0].event?.[1].script?.exec).toEqual([
+      "console.log('pre');",
+    ]);
   });
 });

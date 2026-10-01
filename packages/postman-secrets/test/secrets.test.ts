@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-  SecretResolutionError,
+  type CommandRunner,
   envProvider,
   infisicalProvider,
   parseDotenvExport,
   parseVaultKvJson,
   resolveSecrets,
   reveal,
+  SecretResolutionError,
   vaultProvider,
-  type CommandRunner,
 } from "../src/index.js";
 
 interface Call {
@@ -48,7 +48,7 @@ describe("parseVaultKvJson", () => {
 describe("parseDotenvExport", () => {
   it("parses export lines, quotes, and comments", () => {
     const parsed = parseDotenvExport(
-      ['# comment', 'export TOKEN="abc"', "PLAIN=value", "", "EMPTY="].join(
+      ["# comment", 'export TOKEN="abc"', "PLAIN=value", "", "EMPTY="].join(
         "\n",
       ),
     );
@@ -59,9 +59,9 @@ describe("parseDotenvExport", () => {
 describe("envProvider", () => {
   it("reads from the supplied environment", async () => {
     const provider = envProvider({ env: { TOKEN: "abc" } });
-    expect(reveal(await provider.read({ provider: "env", name: "TOKEN" }))).toBe(
-      "abc",
-    );
+    expect(
+      reveal(await provider.read({ provider: "env", name: "TOKEN" })),
+    ).toBe("abc");
   });
 
   it("throws when the variable is missing", async () => {
@@ -98,7 +98,11 @@ describe("vaultProvider", () => {
       command: fakeRunner('{"data":{"data":{}}}'),
     });
     await expect(
-      provider.read({ provider: "vault", path: "secret/data/ci", field: "token" }),
+      provider.read({
+        provider: "vault",
+        path: "secret/data/ci",
+        field: "token",
+      }),
     ).rejects.toThrow(SecretResolutionError);
   });
 });
@@ -149,9 +153,12 @@ describe("resolveSecrets", () => {
 
   it("throws when no provider is registered", async () => {
     await expect(
-      resolveSecrets([{ variable: "a", secret: { provider: "env", name: "A" } }], {
-        providers: [],
-      }),
+      resolveSecrets(
+        [{ variable: "a", secret: { provider: "env", name: "A" } }],
+        {
+          providers: [],
+        },
+      ),
     ).rejects.toThrow(SecretResolutionError);
   });
 });

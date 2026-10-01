@@ -31,7 +31,9 @@ export function buildHelperPrelude(helpers: readonly ScriptHelper[]): string {
     "  pm.testUtils = pm.testUtils || {};",
   ];
   for (const helper of helpers) {
-    lines.push(`  pm.testUtils[${JSON.stringify(helper.name)}] = (${helper.body});`);
+    lines.push(
+      `  pm.testUtils[${JSON.stringify(helper.name)}] = (${helper.body});`,
+    );
   }
   lines.push("})();");
   return lines.join("\n");

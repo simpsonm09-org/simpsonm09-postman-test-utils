@@ -30,7 +30,13 @@ describe("parseArgs", () => {
   });
 
   it("parses the emit target", () => {
-    const options = parseArgs(["run", "--collection", "c.json", "--emit", "out.json"]);
+    const options = parseArgs([
+      "run",
+      "--collection",
+      "c.json",
+      "--emit",
+      "out.json",
+    ]);
     expect(options.emit).toBe("out.json");
   });
 

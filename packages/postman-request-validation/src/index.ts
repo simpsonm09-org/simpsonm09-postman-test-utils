@@ -142,7 +142,11 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     };
   }
 
-  function assertScenarioKeys(value: any, allowed: string[], label: string): void {
+  function assertScenarioKeys(
+    value: any,
+    allowed: string[],
+    label: string,
+  ): void {
     Object.keys(value).forEach((key: string) => {
       if (!allowed.includes(key)) {
         throw new Error(`${label} does not support '${key}'.`);
@@ -165,8 +169,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
       !Array.isArray(status.oneOf) ||
       status.oneOf.length === 0 ||
       status.oneOf.some(
-        (value: any) =>
-          !Number.isInteger(value) || value < 100 || value > 599,
+        (value: any) => !Number.isInteger(value) || value < 100 || value > 599,
       )
     ) {
       throw new Error(
@@ -216,9 +219,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     }
 
     if (kind === "json" && expect.events !== undefined) {
-      throw new Error(
-        "SCENARIO.response.expect.events is only valid for SSE.",
-      );
+      throw new Error("SCENARIO.response.expect.events is only valid for SSE.");
     }
 
     const arrays =
@@ -228,7 +229,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
               "SCENARIO.response.expect cannot define both arrays and arrayContains.",
             );
           })()
-        : expect.arrays ?? expect.arrayContains;
+        : (expect.arrays ?? expect.arrayContains);
 
     const regex = compileScenarioMap(expect.regex, "regex");
     const compiledArrays = compileScenarioMap(arrays, "arrays");
@@ -282,9 +283,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     }
 
     if (!isObject(map)) {
-      throw new Error(
-        `SCENARIO.response.expect.${label} must be an object.`,
-      );
+      throw new Error(`SCENARIO.response.expect.${label} must be an object.`);
     }
 
     Object.keys(map).forEach((path: string) => {
@@ -484,7 +483,8 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     options: any = {},
   ): ValidationResult {
     const reportTest =
-      options.reportTest || ((name: string, callback: () => void) => pm.test(name, callback));
+      options.reportTest ||
+      ((name: string, callback: () => void) => pm.test(name, callback));
     const reportSkippedTest =
       options.reportSkippedTest ||
       ((name: string, callback: () => void) => pm.test.skip(name, callback));
@@ -507,9 +507,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     } else if (compiled.kind === "sse") {
       reportTest("Response content type is text/event-stream", () => {
         if (normalizeContentType(context.contentType) !== "text/event-stream") {
-          throw new Error(
-            "Response content type was not text/event-stream.",
-          );
+          throw new Error("Response content type was not text/event-stream.");
         }
       });
     }
@@ -536,7 +534,11 @@ export function createRequestValidationSuite(): RequestValidationSuite {
       compiled.kind === "sse" &&
       compiled.expectations.events !== null
     ) {
-      runScenarioEvents(context.events, compiled.expectations.events, reportTest);
+      runScenarioEvents(
+        context.events,
+        compiled.expectations.events,
+        reportTest,
+      );
     }
 
     processScenarioVariables(
@@ -552,7 +554,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
         : compiled.kind === "json"
           ? context.body
           : compiled.kind === "sse"
-            ? context.events[0]?.data ?? null
+            ? (context.events[0]?.data ?? null)
             : null,
       isNoContent: context.isNoContent,
     };
@@ -602,10 +604,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     let frame: string[] = [];
 
     const dispatch = () => {
-      if (
-        frame.length === 0 ||
-        frame.every((line) => line.startsWith(":"))
-      ) {
+      if (frame.length === 0 || frame.every((line) => line.startsWith(":"))) {
         frame = [];
         return;
       }
@@ -720,9 +719,12 @@ export function createRequestValidationSuite(): RequestValidationSuite {
       }
 
       if (expectation.name !== undefined) {
-        reportTest(`SSE event ${index} name equals '${expectation.name}'`, () => {
-          pm.expect(event.name).to.equal(expectation.name);
-        });
+        reportTest(
+          `SSE event ${index} name equals '${expectation.name}'`,
+          () => {
+            pm.expect(event.name).to.equal(expectation.name);
+          },
+        );
       }
 
       reportTest(`SSE event ${index} data contains valid JSON`, () => {
@@ -732,11 +734,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
       });
 
       if (!event.dataParseError) {
-        runScenarioAssertions(
-          event.data,
-          expectation.assertions,
-          reportTest,
-        );
+        runScenarioAssertions(event.data, expectation.assertions, reportTest);
       }
     });
   }
@@ -959,9 +957,12 @@ export function createRequestValidationSuite(): RequestValidationSuite {
 
     setRetryAttempt(retryConfig.stateVariable, nextAttempt);
 
-    setTimeout(() => {
-      pm.execution.setNextRequest(pm.info.requestId || pm.info.requestName);
-    }, getPollingDelayMs(retryConfig, nextAttempt));
+    setTimeout(
+      () => {
+        pm.execution.setNextRequest(pm.info.requestId || pm.info.requestName);
+      },
+      getPollingDelayMs(retryConfig, nextAttempt),
+    );
 
     return dryRunResult;
   }
@@ -970,8 +971,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     const stateVariable = getRetryStateVariable();
 
     const hasShouldRetry =
-      retryConfig.shouldRetry !== undefined &&
-      retryConfig.shouldRetry !== null;
+      retryConfig.shouldRetry !== undefined && retryConfig.shouldRetry !== null;
 
     const hasBackoff =
       retryConfig.backoff !== undefined && retryConfig.backoff !== null;
@@ -1031,8 +1031,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     }
 
     const delay =
-      retryConfig.delayMs *
-      retryConfig.backoff.multiplier ** (nextAttempt - 1);
+      retryConfig.delayMs * retryConfig.backoff.multiplier ** (nextAttempt - 1);
 
     return Number.isFinite(delay)
       ? Math.min(retryConfig.backoff.maxDelayMs, delay)
@@ -1074,10 +1073,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     }
 
     reportTest("Response matches expected schema", () => {
-      if (
-        responseTarget === undefined ||
-        responseTarget === pm.response
-      ) {
+      if (responseTarget === undefined || responseTarget === pm.response) {
         pm.response.to.have.jsonSchema(schema);
         return;
       }
@@ -1206,7 +1202,9 @@ export function createRequestValidationSuite(): RequestValidationSuite {
                       Object.prototype.toString.call(expectedValue) ===
                       "[object RegExp]"
                     ) {
-                      return (expectedValue as RegExp).test(String(actualValue));
+                      return (expectedValue as RegExp).test(
+                        String(actualValue),
+                      );
                     }
 
                     return actualValue === expectedValue;
@@ -1275,15 +1273,12 @@ export function createRequestValidationSuite(): RequestValidationSuite {
         setter(variableName, "");
       }
 
-      reportTest(
-        `${variableType} variable ${variableName} was cleared`,
-        () => {
-          if (!applyVariableChanges) {
-            return;
-          }
-          pm.expect(getter(variableName)).to.equal("");
-        },
-      );
+      reportTest(`${variableType} variable ${variableName} was cleared`, () => {
+        if (!applyVariableChanges) {
+          return;
+        }
+        pm.expect(getter(variableName)).to.equal("");
+      });
     });
   }
 
