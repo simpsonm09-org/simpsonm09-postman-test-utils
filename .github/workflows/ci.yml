@@ -48,3 +48,7 @@ jobs:
         run: npm ci
       - name: Verify
         run: npm run verify
+      - name: Patch coverage
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/patch-coverage.mjs --lcov coverage/lcov.info --base "$BASE" --threshold 80
