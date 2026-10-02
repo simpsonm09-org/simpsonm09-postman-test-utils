@@ -1,3 +1,8 @@
+# node-forge 1.4.0 is the newest release and Trivy reports no fixed version for
+# CVE-2026-85393. It arrives transitively through newman, which runs collections
+# offline. Revisit when a fixed node-forge ships.
+CVE-2026-85393 exp:2027-01-01
+
 # CVE-2026-73231 in @faker-js/faker 6.3.1.
 #
 # @faker-js/faker is a dev-only transitive of newman: postman-collection@4.4.0
