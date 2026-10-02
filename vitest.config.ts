@@ -19,12 +19,12 @@ export default defineConfig({
   test: {
     include: ["packages/*/test/**/*.test.ts", "test/**/*.test.ts"],
     testTimeout: 30000,
-  },
-  coverage: {
-    enabled: true,
-    provider: "v8",
-    reporter: ["lcov"],
-    reportsDirectory: "coverage",
-    include: ["packages/*/src/**/*.ts", "src/**/*.ts"],
+    coverage: {
+      enabled: true,
+      provider: "v8",
+      reporter: ["lcov"],
+      reportsDirectory: "coverage",
+      include: ["packages/*/src/**/*.ts", "src/**/*.ts"],
+    },
   },
 });
