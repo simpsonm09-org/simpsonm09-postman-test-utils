@@ -1,9 +1,10 @@
-# CVE-2026-73231 in @faker-js/faker 6.3.1.
-#
-# @faker-js/faker is a dev-only transitive of newman: postman-collection@4.4.0
-# pins 5.5.3, and the root override moves it to 6.3.1, the newest
-# CommonJS-compatible release. The fix version 10.5.0 is ESM-only and cannot be
-# require()d by postman-collection, so the pin cannot move. The vulnerable path
-# needs attacker-controlled fake templates; this tool runs collections its own
-# author wrote.
-CVE-2026-73231
+# node-forge 1.4.0 is the newest release and Trivy reports no fixed version for
+# CVE-2026-85393. It arrives transitively through newman, which runs collections
+# offline. Revisit when a fixed node-forge ships.
+CVE-2026-85393 exp:2027-01-01
+
+# postman-collection 4.4.0 uses the @faker-js/faker v5/v6 API (faker.address,
+# faker.random, faker.datatype.number), which v10 removed. The fix for
+# CVE-2026-73231 lands only in 10.5.0, so the override cannot move without
+# breaking collection runs. Revisit when postman-collection adopts a fixed faker.
+CVE-2026-73231 exp:2027-01-01
