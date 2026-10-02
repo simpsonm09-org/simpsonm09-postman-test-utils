@@ -12,3 +12,6 @@ trivy.sarif
 # Local tool state
 .aislop/history.jsonl
 .aislop/agent/
+
+# Verification proof
+artifacts/

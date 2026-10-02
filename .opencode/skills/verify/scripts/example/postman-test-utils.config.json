@@ -1,0 +1,5 @@
+{
+  "collection": ".opencode/skills/verify/scripts/example/health.postman_collection.json",
+  "environment": ".opencode/skills/verify/scripts/example/local.postman_environment.json",
+  "validation": { "suite": "request-validation" }
+}
