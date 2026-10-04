@@ -15,6 +15,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "npm run build -w @simpsonm09/postman-secrets && npm run build -w @simpsonm09/postman-request-validation && npm run build -w postman-test-utils",
     "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "verify": "npm run typecheck && npm run build && npm run test",
     "smoke": "npm run build && node scripts/smoke-install.mjs",
     "publish:dry-run": "node scripts/publish.mjs",
