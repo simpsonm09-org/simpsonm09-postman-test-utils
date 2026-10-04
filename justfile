@@ -11,6 +11,10 @@ default:
 install:
     npm install
 
+# Run every linter over the tracked files.
+lint:
+    mise exec -- flint run --full
+
 # Typecheck every package.
 typecheck:
     npm run typecheck
@@ -22,6 +26,10 @@ build:
 # Run the test suite.
 test:
     npm test
+
+# Run the tests and write an lcov report to coverage/lcov.info.
+coverage:
+    npm run coverage
 
 # Typecheck, build, and test.
 verify:
