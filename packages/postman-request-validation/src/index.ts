@@ -207,7 +207,26 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     ];
 
     assertScenarioKeys(expect, allowedKeys, "SCENARIO.response.expect");
+    assertScenarioEventShape(expect, kind);
 
+    const arrays = resolveScenarioArrays(expect);
+    const regex = compileScenarioMap(expect.regex, "regex");
+    const compiledArrays = compileScenarioMap(arrays, "arrays");
+
+    assertRegexValues(regex);
+    assertArrayValues(compiledArrays);
+
+    return {
+      schema: compileScenarioSchema(expect.schema),
+      values: compileScenarioMap(expect.values, "values"),
+      notValues: compileScenarioMap(expect.notValues, "notValues"),
+      regex,
+      arrays: compiledArrays,
+      events: compileScenarioEvents(expect, kind),
+    };
+  }
+
+  function assertScenarioEventShape(expect: any, kind: string): void {
     if (
       kind === "sse" &&
       expect.events !== undefined &&
@@ -221,19 +240,19 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     if (kind === "json" && expect.events !== undefined) {
       throw new Error("SCENARIO.response.expect.events is only valid for SSE.");
     }
+  }
 
-    const arrays =
-      expect.arrays !== undefined && expect.arrayContains !== undefined
-        ? (() => {
-            throw new Error(
-              "SCENARIO.response.expect cannot define both arrays and arrayContains.",
-            );
-          })()
-        : (expect.arrays ?? expect.arrayContains);
+  function resolveScenarioArrays(expect: any): any {
+    if (expect.arrays !== undefined && expect.arrayContains !== undefined) {
+      throw new Error(
+        "SCENARIO.response.expect cannot define both arrays and arrayContains.",
+      );
+    }
 
-    const regex = compileScenarioMap(expect.regex, "regex");
-    const compiledArrays = compileScenarioMap(arrays, "arrays");
+    return expect.arrays ?? expect.arrayContains;
+  }
 
+  function assertRegexValues(regex: any): void {
     Object.values(regex).forEach((value: any) => {
       if (Object.prototype.toString.call(value) !== "[object RegExp]") {
         throw new Error(
@@ -241,28 +260,26 @@ export function createRequestValidationSuite(): RequestValidationSuite {
         );
       }
     });
+  }
 
-    Object.values(compiledArrays).forEach((value: any) => {
+  function assertArrayValues(arrays: any): void {
+    Object.values(arrays).forEach((value: any) => {
       if (!Array.isArray(value) || value.some((item: any) => !isObject(item))) {
         throw new Error(
           "SCENARIO.response.expect.arrays values must be arrays of objects.",
         );
       }
     });
+  }
 
-    return {
-      schema: compileScenarioSchema(expect.schema),
-      values: compileScenarioMap(expect.values, "values"),
-      notValues: compileScenarioMap(expect.notValues, "notValues"),
-      regex,
-      arrays: compiledArrays,
-      events:
-        kind === "sse" && Array.isArray(expect.events)
-          ? expect.events.map((event: any, index: number) =>
-              compileScenarioEvent(event, index),
-            )
-          : null,
-    };
+  function compileScenarioEvents(expect: any, kind: string): any {
+    if (kind === "sse" && Array.isArray(expect.events)) {
+      return expect.events.map((event: any, index: number) =>
+        compileScenarioEvent(event, index),
+      );
+    }
+
+    return null;
   }
 
   function compileScenarioSchema(schema: any): any {
@@ -369,53 +386,74 @@ export function createRequestValidationSuite(): RequestValidationSuite {
       );
     }
 
-    return actions.map((action: any, index: number) => {
-      if (!isObject(action)) {
-        throw new Error(
-          `SCENARIO.variables action ${index} must be an object.`,
-        );
-      }
+    return actions.map((action: any, index: number) =>
+      compileScenarioVariableAction(action, index, isSave, kind),
+    );
+  }
 
-      const allowed = isSave
-        ? ["scope", "variable", "name", "source", "from"]
-        : ["scope", "variable", "name"];
+  function compileScenarioVariableAction(
+    action: any,
+    index: number,
+    isSave: boolean,
+    kind: string | null,
+  ): any {
+    assertVariableActionShape(action, index);
 
-      assertScenarioKeys(
-        action,
-        allowed,
-        `SCENARIO.variables.${isSave ? "save" : "clear"}[${index}]`,
+    const allowed = isSave
+      ? ["scope", "variable", "name", "source", "from"]
+      : ["scope", "variable", "name"];
+
+    assertScenarioKeys(
+      action,
+      allowed,
+      `SCENARIO.variables.${isSave ? "save" : "clear"}[${index}]`,
+    );
+    assertVariableActionScope(action, index);
+    assertVariableActionName(action, index);
+
+    const variable = action.variable ?? action.name;
+    const source = action.source ?? action.from;
+
+    assertVariableName(variable, index);
+
+    if (isSave) {
+      validateScenarioSource(source, index, kind);
+    }
+
+    return { scope: action.scope, variable, source };
+  }
+
+  function assertVariableActionShape(action: any, index: number): void {
+    if (!isObject(action)) {
+      throw new Error(`SCENARIO.variables action ${index} must be an object.`);
+    }
+  }
+
+  function assertVariableActionScope(action: any, index: number): void {
+    if (action.scope !== "environment" && action.scope !== "collection") {
+      throw new Error(
+        `SCENARIO.variables action ${index} has an invalid scope.`,
       );
+    }
+  }
 
-      if (action.scope !== "environment" && action.scope !== "collection") {
-        throw new Error(
-          `SCENARIO.variables action ${index} has an invalid scope.`,
-        );
-      }
+  function assertVariableActionName(action: any, index: number): void {
+    if (
+      (action.variable !== undefined && action.name !== undefined) ||
+      (action.variable === undefined && action.name === undefined)
+    ) {
+      throw new Error(
+        `SCENARIO.variables action ${index} needs a variable name.`,
+      );
+    }
+  }
 
-      if (
-        (action.variable !== undefined && action.name !== undefined) ||
-        (action.variable === undefined && action.name === undefined)
-      ) {
-        throw new Error(
-          `SCENARIO.variables action ${index} needs a variable name.`,
-        );
-      }
-
-      const variable = action.variable ?? action.name;
-      const source = action.source ?? action.from;
-
-      if (typeof variable !== "string" || variable.trim() === "") {
-        throw new Error(
-          `SCENARIO.variables action ${index} needs a variable name.`,
-        );
-      }
-
-      if (isSave) {
-        validateScenarioSource(source, index, kind);
-      }
-
-      return { scope: action.scope, variable, source };
-    });
+  function assertVariableName(variable: any, index: number): void {
+    if (typeof variable !== "string" || variable.trim() === "") {
+      throw new Error(
+        `SCENARIO.variables action ${index} needs a variable name.`,
+      );
+    }
   }
 
   function validateScenarioSource(
@@ -424,21 +462,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     kind: string | null,
   ): void {
     if (typeof source === "string") {
-      if (source.trim() === "") {
-        throw new Error(
-          `SCENARIO.variables.save[${index}].source must not be empty.`,
-        );
-      }
-      if (kind === null) {
-        throw new Error(
-          `SCENARIO.variables.save[${index}].source requires SCENARIO.response.`,
-        );
-      }
-      if (kind === "sse") {
-        throw new Error(
-          `SCENARIO.variables.save[${index}].source must use an event source for SSE.`,
-        );
-      }
+      validateScenarioSourceString(source, index, kind);
       return;
     }
 
@@ -448,6 +472,38 @@ export function createRequestValidationSuite(): RequestValidationSuite {
       );
     }
 
+    validateScenarioEventSource(source, index, kind);
+  }
+
+  function validateScenarioSourceString(
+    source: string,
+    index: number,
+    kind: string | null,
+  ): void {
+    if (source.trim() === "") {
+      throw new Error(
+        `SCENARIO.variables.save[${index}].source must not be empty.`,
+      );
+    }
+
+    if (kind === null) {
+      throw new Error(
+        `SCENARIO.variables.save[${index}].source requires SCENARIO.response.`,
+      );
+    }
+
+    if (kind === "sse") {
+      throw new Error(
+        `SCENARIO.variables.save[${index}].source must use an event source for SSE.`,
+      );
+    }
+  }
+
+  function validateScenarioEventSource(
+    source: any,
+    index: number,
+    kind: string | null,
+  ): void {
     if (kind === null) {
       throw new Error(
         `SCENARIO.variables.save[${index}].source requires SCENARIO.response.`,
@@ -491,26 +547,7 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     const applyVariableChanges = options.applyVariableChanges !== false;
     const context = readScenarioResponseContext(compiled.kind);
 
-    if (compiled.kind !== null && context.isNoContent) {
-      reportSkippedTest(
-        `Response body contains valid ${
-          compiled.kind === "sse" ? "SSE" : "JSON"
-        } (skipped for 204 No Content)`,
-        () => {},
-      );
-    } else if (compiled.kind === "json") {
-      reportTest("Response body contains valid JSON", () => {
-        if (context.bodyParseError) {
-          throw new Error("Response was not valid JSON.");
-        }
-      });
-    } else if (compiled.kind === "sse") {
-      reportTest("Response content type is text/event-stream", () => {
-        if (normalizeContentType(context.contentType) !== "text/event-stream") {
-          throw new Error("Response content type was not text/event-stream.");
-        }
-      });
-    }
+    reportResponseBodyKind(compiled, context, reportTest, reportSkippedTest);
 
     if (compiled.status.length > 0) {
       reportTest(
@@ -549,15 +586,59 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     );
 
     return {
-      response: context.isNoContent
-        ? null
-        : compiled.kind === "json"
-          ? context.body
-          : compiled.kind === "sse"
-            ? (context.events[0]?.data ?? null)
-            : null,
+      response: scenarioResult(context, compiled),
       isNoContent: context.isNoContent,
     };
+  }
+
+  function reportResponseBodyKind(
+    compiled: any,
+    context: any,
+    reportTest: (name: string, callback: () => void) => void,
+    reportSkippedTest: (name: string, callback: () => void) => void,
+  ): void {
+    if (compiled.kind !== null && context.isNoContent) {
+      reportSkippedTest(
+        `Response body contains valid ${
+          compiled.kind === "sse" ? "SSE" : "JSON"
+        } (skipped for 204 No Content)`,
+        () => {},
+      );
+      return;
+    }
+
+    if (compiled.kind === "json") {
+      reportTest("Response body contains valid JSON", () => {
+        if (context.bodyParseError) {
+          throw new Error("Response was not valid JSON.");
+        }
+      });
+      return;
+    }
+
+    if (compiled.kind === "sse") {
+      reportTest("Response content type is text/event-stream", () => {
+        if (normalizeContentType(context.contentType) !== "text/event-stream") {
+          throw new Error("Response content type was not text/event-stream.");
+        }
+      });
+    }
+  }
+
+  function scenarioResult(context: any, compiled: any): any {
+    if (context.isNoContent) {
+      return null;
+    }
+
+    if (compiled.kind === "json") {
+      return context.body;
+    }
+
+    if (compiled.kind === "sse") {
+      return context.events[0]?.data ?? null;
+    }
+
+    return null;
   }
 
   function readScenarioResponseContext(kind: string | null): any {
@@ -604,61 +685,12 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     let frame: string[] = [];
 
     const dispatch = () => {
-      if (frame.length === 0 || frame.every((line) => line.startsWith(":"))) {
+      if (isSkippableFrame(frame)) {
         frame = [];
         return;
       }
 
-      let eventName: string | undefined;
-      let id: string | undefined;
-      let retry: number | undefined;
-      const dataLines: string[] = [];
-
-      frame.forEach((line) => {
-        if (line.startsWith(":")) {
-          return;
-        }
-        const colon = line.indexOf(":");
-        const field = colon < 0 ? line : line.slice(0, colon);
-        let value = colon < 0 ? "" : line.slice(colon + 1);
-        if (value.startsWith(" ")) {
-          value = value.slice(1);
-        }
-        if (field === "event") {
-          eventName = value;
-        } else if (field === "id") {
-          id = value;
-        } else if (field === "retry") {
-          if (/^\d+$/.test(value)) {
-            retry = Number(value);
-          }
-        } else if (field === "data") {
-          dataLines.push(value);
-        }
-      });
-
-      const dataText = dataLines.join("\n");
-      let data: any;
-      let dataParseError = false;
-
-      if (dataLines.length === 0) {
-        dataParseError = true;
-      } else {
-        try {
-          data = JSON.parse(dataText);
-        } catch {
-          dataParseError = true;
-        }
-      }
-
-      events.push({
-        name: eventName === undefined ? "message" : eventName,
-        id,
-        retry,
-        data,
-        dataText,
-        dataParseError,
-      });
+      events.push(compileScenarioSseEvent(frame));
       frame = [];
     };
 
@@ -672,6 +704,89 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     dispatch();
 
     return events;
+  }
+
+  function isSkippableFrame(frame: string[]): boolean {
+    return frame.length === 0 || frame.every((line) => line.startsWith(":"));
+  }
+
+  function compileScenarioSseEvent(frame: string[]): any {
+    const parsed: {
+      eventName?: string;
+      id?: string;
+      retry?: number;
+      dataLines: string[];
+    } = { dataLines: [] };
+
+    frame.forEach((line) => {
+      applyScenarioSseLine(line, parsed);
+    });
+
+    const dataText = parsed.dataLines.join("\n");
+    let data: any;
+    let dataParseError = false;
+
+    if (parsed.dataLines.length === 0) {
+      dataParseError = true;
+    } else {
+      try {
+        data = JSON.parse(dataText);
+      } catch {
+        dataParseError = true;
+      }
+    }
+
+    return {
+      name: parsed.eventName === undefined ? "message" : parsed.eventName,
+      id: parsed.id,
+      retry: parsed.retry,
+      data,
+      dataText,
+      dataParseError,
+    };
+  }
+
+  function applyScenarioSseLine(
+    line: string,
+    parsed: {
+      eventName?: string;
+      id?: string;
+      retry?: number;
+      dataLines: string[];
+    },
+  ): void {
+    if (line.startsWith(":")) {
+      return;
+    }
+
+    const { field, value } = parseScenarioSseField(line);
+
+    if (field === "event") {
+      parsed.eventName = value;
+    } else if (field === "id") {
+      parsed.id = value;
+    } else if (field === "retry") {
+      applyScenarioRetry(value, parsed);
+    } else if (field === "data") {
+      parsed.dataLines.push(value);
+    }
+  }
+
+  function parseScenarioSseField(line: string): {
+    field: string;
+    value: string;
+  } {
+    const colon = line.indexOf(":");
+    const field = colon < 0 ? line : line.slice(0, colon);
+    const rawValue = colon < 0 ? "" : line.slice(colon + 1);
+    const value = rawValue.startsWith(" ") ? rawValue.slice(1) : rawValue;
+    return { field, value };
+  }
+
+  function applyScenarioRetry(value: string, parsed: { retry?: number }): void {
+    if (/^\d+$/.test(value)) {
+      parsed.retry = Number(value);
+    }
   }
 
   function runScenarioAssertions(
@@ -976,35 +1091,9 @@ export function createRequestValidationSuite(): RequestValidationSuite {
     const hasBackoff =
       retryConfig.backoff !== undefined && retryConfig.backoff !== null;
 
-    const backoff = hasBackoff
-      ? retryConfig.backoff !== null &&
-        typeof retryConfig.backoff === "object" &&
-        !Array.isArray(retryConfig.backoff) &&
-        Number.isFinite(retryConfig.backoff.multiplier) &&
-        retryConfig.backoff.multiplier >= 1 &&
-        Number.isFinite(retryConfig.backoff.maxDelayMs) &&
-        retryConfig.backoff.maxDelayMs >= retryConfig.delayMs
-        ? {
-            multiplier: retryConfig.backoff.multiplier,
-            maxDelayMs: retryConfig.backoff.maxDelayMs,
-          }
-        : null
-      : null;
+    const backoff = normalizeRetryBackoff(retryConfig, hasBackoff);
 
-    if (
-      !Array.isArray(retryConfig.statuses) ||
-      retryConfig.statuses.length === 0 ||
-      retryConfig.statuses.some(
-        (status: any) =>
-          !Number.isInteger(status) || status < 100 || status > 599,
-      ) ||
-      !Number.isInteger(retryConfig.attempts) ||
-      retryConfig.attempts < 1 ||
-      !Number.isFinite(retryConfig.delayMs) ||
-      retryConfig.delayMs < 0 ||
-      (hasBackoff && backoff === null) ||
-      (hasShouldRetry && typeof retryConfig.shouldRetry !== "function")
-    ) {
+    if (!isValidRetryConfig(retryConfig, hasBackoff, hasShouldRetry, backoff)) {
       return Object.keys(retryConfig).length > 0
         ? { valid: false, stateVariable }
         : null;
@@ -1019,6 +1108,79 @@ export function createRequestValidationSuite(): RequestValidationSuite {
       shouldRetry: hasShouldRetry ? retryConfig.shouldRetry : null,
       stateVariable,
     };
+  }
+
+  function normalizeRetryBackoff(retryConfig: any, hasBackoff: boolean): any {
+    if (!hasBackoff) {
+      return null;
+    }
+
+    const backoff = retryConfig.backoff;
+
+    if (
+      backoff !== null &&
+      typeof backoff === "object" &&
+      !Array.isArray(backoff) &&
+      Number.isFinite(backoff.multiplier) &&
+      backoff.multiplier >= 1 &&
+      Number.isFinite(backoff.maxDelayMs) &&
+      backoff.maxDelayMs >= retryConfig.delayMs
+    ) {
+      return {
+        multiplier: backoff.multiplier,
+        maxDelayMs: backoff.maxDelayMs,
+      };
+    }
+
+    return null;
+  }
+
+  function isValidRetryConfig(
+    retryConfig: any,
+    hasBackoff: boolean,
+    hasShouldRetry: boolean,
+    backoff: any,
+  ): boolean {
+    if (!hasValidRetryStatuses(retryConfig.statuses)) {
+      return false;
+    }
+
+    if (!isPositiveInteger(retryConfig.attempts)) {
+      return false;
+    }
+
+    if (!isNonNegativeFinite(retryConfig.delayMs)) {
+      return false;
+    }
+
+    if (hasBackoff && backoff === null) {
+      return false;
+    }
+
+    if (hasShouldRetry && typeof retryConfig.shouldRetry !== "function") {
+      return false;
+    }
+
+    return true;
+  }
+
+  function isPositiveInteger(value: any): boolean {
+    return Number.isInteger(value) && value >= 1;
+  }
+
+  function isNonNegativeFinite(value: any): boolean {
+    return Number.isFinite(value) && value >= 0;
+  }
+
+  function hasValidRetryStatuses(statuses: any): boolean {
+    return (
+      Array.isArray(statuses) &&
+      statuses.length > 0 &&
+      statuses.every(
+        (status: any) =>
+          Number.isInteger(status) && status >= 100 && status <= 599,
+      )
+    );
   }
 
   function getPollingDelayMs(retryConfig: any, nextAttempt: number): number {
@@ -1172,45 +1334,9 @@ export function createRequestValidationSuite(): RequestValidationSuite {
               expectedItem,
             )}`,
             () => {
-              const found = actualArray.some((actualItem: any) => {
-                if (
-                  actualItem === null ||
-                  actualItem === undefined ||
-                  expectedItem === null ||
-                  typeof expectedItem !== "object" ||
-                  Array.isArray(expectedItem)
-                ) {
-                  return false;
-                }
-
-                return Object.entries(expectedItem).every(
-                  ([field, expectedValue]) => {
-                    const actualValue = getValueByPath(actualItem, field);
-
-                    if (actualValue === undefined || actualValue === null) {
-                      return false;
-                    }
-
-                    if (
-                      typeof actualValue === "string" &&
-                      actualValue.trim() === ""
-                    ) {
-                      return false;
-                    }
-
-                    if (
-                      Object.prototype.toString.call(expectedValue) ===
-                      "[object RegExp]"
-                    ) {
-                      return (expectedValue as RegExp).test(
-                        String(actualValue),
-                      );
-                    }
-
-                    return actualValue === expectedValue;
-                  },
-                );
-              });
+              const found = actualArray.some((actualItem: any) =>
+                expectedItemMatches(actualItem, expectedItem),
+              );
 
               pm.expect(
                 found,
@@ -1223,6 +1349,44 @@ export function createRequestValidationSuite(): RequestValidationSuite {
         });
       },
     );
+  }
+
+  function expectedItemMatches(actualItem: any, expectedItem: any): boolean {
+    if (
+      actualItem === null ||
+      actualItem === undefined ||
+      expectedItem === null ||
+      typeof expectedItem !== "object" ||
+      Array.isArray(expectedItem)
+    ) {
+      return false;
+    }
+
+    return Object.entries(expectedItem).every(([field, expectedValue]) =>
+      fieldMatchesExpected(actualItem, field, expectedValue),
+    );
+  }
+
+  function fieldMatchesExpected(
+    actualItem: any,
+    field: string,
+    expectedValue: any,
+  ): boolean {
+    const actualValue = getValueByPath(actualItem, field);
+
+    if (actualValue === undefined || actualValue === null) {
+      return false;
+    }
+
+    if (typeof actualValue === "string" && actualValue.trim() === "") {
+      return false;
+    }
+
+    if (Object.prototype.toString.call(expectedValue) === "[object RegExp]") {
+      return (expectedValue as RegExp).test(String(actualValue));
+    }
+
+    return actualValue === expectedValue;
   }
 
   function processVariableStorage(

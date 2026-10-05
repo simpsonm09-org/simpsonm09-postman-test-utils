@@ -11,42 +11,55 @@ interface RecordedTest {
   error?: unknown;
 }
 
+interface SchemaShape {
+  type?: string;
+  required?: string[];
+  properties?: Record<string, unknown>;
+}
+
+function matchesObjectSchema(value: unknown, schema: SchemaShape): boolean {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  for (const key of schema.required ?? []) {
+    if (!(key in record)) {
+      return false;
+    }
+  }
+  for (const [key, nested] of Object.entries(schema.properties ?? {})) {
+    if (key in record && !matchesSchema(record[key], nested)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function matchesPrimitiveSchema(
+  value: unknown,
+  type: string | undefined,
+): boolean {
+  if (type === "array") {
+    return Array.isArray(value);
+  }
+  if (type === "string") {
+    return typeof value === "string";
+  }
+  if (type === "number") {
+    return typeof value === "number";
+  }
+  return true;
+}
+
 function matchesSchema(value: unknown, schema: unknown): boolean {
   if (schema === null || schema === undefined) {
     return true;
   }
-  const typed = schema as {
-    type?: string;
-    required?: string[];
-    properties?: Record<string, unknown>;
-  };
+  const typed = schema as SchemaShape;
   if (typed.type === "object") {
-    if (typeof value !== "object" || value === null || Array.isArray(value)) {
-      return false;
-    }
-    const record = value as Record<string, unknown>;
-    for (const key of typed.required ?? []) {
-      if (!(key in record)) {
-        return false;
-      }
-    }
-    for (const [key, nested] of Object.entries(typed.properties ?? {})) {
-      if (key in record && !matchesSchema(record[key], nested)) {
-        return false;
-      }
-    }
-    return true;
+    return matchesObjectSchema(value, typed);
   }
-  if (typed.type === "array") {
-    return Array.isArray(value);
-  }
-  if (typed.type === "string") {
-    return typeof value === "string";
-  }
-  if (typed.type === "number") {
-    return typeof value === "number";
-  }
-  return true;
+  return matchesPrimitiveSchema(value, typed.type);
 }
 
 function createExpect() {
