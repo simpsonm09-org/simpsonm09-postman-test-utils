@@ -11,42 +11,55 @@ interface RecordedTest {
   error?: unknown;
 }
 
+interface SchemaShape {
+  type?: string;
+  required?: string[];
+  properties?: Record<string, unknown>;
+}
+
+function matchesObjectSchema(value: unknown, schema: SchemaShape): boolean {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  for (const key of schema.required ?? []) {
+    if (!(key in record)) {
+      return false;
+    }
+  }
+  for (const [key, nested] of Object.entries(schema.properties ?? {})) {
+    if (key in record && !matchesSchema(record[key], nested)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function matchesPrimitiveSchema(
+  value: unknown,
+  type: string | undefined,
+): boolean {
+  if (type === "array") {
+    return Array.isArray(value);
+  }
+  if (type === "string") {
+    return typeof value === "string";
+  }
+  if (type === "number") {
+    return typeof value === "number";
+  }
+  return true;
+}
+
 function matchesSchema(value: unknown, schema: unknown): boolean {
   if (schema === null || schema === undefined) {
     return true;
   }
-  const typed = schema as {
-    type?: string;
-    required?: string[];
-    properties?: Record<string, unknown>;
-  };
+  const typed = schema as SchemaShape;
   if (typed.type === "object") {
-    if (typeof value !== "object" || value === null || Array.isArray(value)) {
-      return false;
-    }
-    const record = value as Record<string, unknown>;
-    for (const key of typed.required ?? []) {
-      if (!(key in record)) {
-        return false;
-      }
-    }
-    for (const [key, nested] of Object.entries(typed.properties ?? {})) {
-      if (key in record && !matchesSchema(record[key], nested)) {
-        return false;
-      }
-    }
-    return true;
+    return matchesObjectSchema(value, typed);
   }
-  if (typed.type === "array") {
-    return Array.isArray(value);
-  }
-  if (typed.type === "string") {
-    return typeof value === "string";
-  }
-  if (typed.type === "number") {
-    return typeof value === "number";
-  }
-  return true;
+  return matchesPrimitiveSchema(value, typed.type);
 }
 
 function createExpect() {
@@ -295,6 +308,227 @@ describe("request-validation suite", () => {
       }),
     ]);
     expect(result.isNoContent).toBe(false);
+  });
+
+  it("rejects a scenario that defines both arrays and arrayContains", () => {
+    const { pm, tests } = createPm();
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: {
+        response: {
+          kind: "json",
+          expect: { arrays: {}, arrayContains: {} },
+        },
+      },
+    });
+    expect(tests).toEqual([
+      expect.objectContaining({
+        name: "SCENARIO configuration is valid",
+        ok: false,
+      }),
+    ]);
+  });
+
+  it("rejects malformed variable actions", () => {
+    const scenarios = [
+      { variables: { save: [42] } },
+      { variables: { save: [{ scope: "bad", variable: "id" }] } },
+      {
+        variables: {
+          save: [{ scope: "environment", variable: "id", name: "other" }],
+        },
+      },
+      { variables: { save: [{ scope: "environment", variable: "  " }] } },
+    ];
+
+    for (const scenario of scenarios) {
+      const { pm, tests } = createPm();
+      (globalThis as { pm?: unknown }).pm = pm;
+      createRequestValidationSuite().execute({
+        SCENARIO: { response: { kind: "json", expect: {} }, ...scenario },
+      });
+      expect(tests).toEqual([
+        expect.objectContaining({
+          name: "SCENARIO configuration is valid",
+          ok: false,
+        }),
+      ]);
+    }
+  });
+
+  it("validates variable save sources", () => {
+    const configs = [
+      {
+        SCENARIO: {
+          response: { kind: "json", expect: {} },
+          variables: {
+            save: [{ scope: "environment", variable: "id", source: "" }],
+          },
+        },
+      },
+      {
+        SCENARIO: {
+          variables: {
+            save: [{ scope: "environment", variable: "id", source: "a.b" }],
+          },
+        },
+      },
+      {
+        SCENARIO: {
+          response: { kind: "sse", expect: {} },
+          variables: {
+            save: [{ scope: "environment", variable: "id", source: "a.b" }],
+          },
+        },
+      },
+      {
+        SCENARIO: {
+          response: { kind: "json", expect: {} },
+          variables: {
+            save: [
+              {
+                scope: "environment",
+                variable: "id",
+                source: { event: 0, data: "id" },
+              },
+            ],
+          },
+        },
+      },
+    ];
+
+    for (const config of configs) {
+      const { pm, tests } = createPm();
+      (globalThis as { pm?: unknown }).pm = pm;
+      createRequestValidationSuite().execute(config);
+      expect(tests).toEqual([
+        expect.objectContaining({
+          name: "SCENARIO configuration is valid",
+          ok: false,
+        }),
+      ]);
+    }
+  });
+
+  it("skips body validation for 204 No Content", () => {
+    const { pm, tests } = createPm({ status: 204 });
+    (globalThis as { pm?: unknown }).pm = pm;
+    const result = createRequestValidationSuite().execute({
+      SCENARIO: { response: { kind: "json", expect: {} } },
+    });
+    expect(result).toEqual({ response: null, isNoContent: true });
+    expect(tests.some((test) => test.name.includes("skipped for 204"))).toBe(
+      true,
+    );
+  });
+
+  it("returns a null response when no response block is configured", () => {
+    const { pm } = createPm({ body: { ok: true } });
+    (globalThis as { pm?: unknown }).pm = pm;
+    const result = createRequestValidationSuite().execute({
+      SCENARIO: { status: { oneOf: [200] } },
+    });
+    expect(result.response).toBeNull();
+    expect(result.isNoContent).toBe(false);
+  });
+
+  it("reports invalid JSON and non-SSE content types", () => {
+    const invalidJson = createPm({ body: "not-json" });
+    (globalThis as { pm?: unknown }).pm = invalidJson.pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: { response: { kind: "json", expect: {} } },
+    });
+    expect(invalidJson.tests.some((test) => !test.ok)).toBe(true);
+
+    const wrongContentType = createPm({
+      contentType: "application/json",
+      text: "",
+    });
+    (globalThis as { pm?: unknown }).pm = wrongContentType.pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: { response: { kind: "sse", expect: {} } },
+    });
+    expect(wrongContentType.tests.some((test) => !test.ok)).toBe(true);
+  });
+
+  it("parses SSE comments, ids, retries, and malformed frames", () => {
+    const { pm, tests } = createPm({
+      contentType: "text/event-stream",
+      text:
+        ': keep-alive\nid: 7\nretry: 1500\ndata: {"ok":true}\n\n' +
+        "event: ping\n\n" +
+        "data: not-json\n\n",
+    });
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: {
+        response: {
+          kind: "sse",
+          expect: {
+            events: [
+              { name: "message", data: { values: { ok: true } } },
+              { name: "ping", data: {} },
+              { data: {} },
+            ],
+          },
+        },
+      },
+    });
+    expect(
+      tests.some((test) => test.name.includes("SSE response contains")),
+    ).toBe(true);
+  });
+
+  it("evaluates array item matchers", () => {
+    const { pm, tests } = createPm({
+      body: {
+        items: [null, { id: "42", name: "  " }, { id: "7" }, { name: "x" }],
+      },
+    });
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: {
+        response: {
+          kind: "json",
+          expect: {
+            arrays: { items: [{ id: /^\d+$/ }, { name: "x" }] },
+          },
+        },
+      },
+    });
+    expect(tests.every((test) => test.ok)).toBe(true);
+  });
+
+  it("validates retry-on-with-polling configuration", () => {
+    const invalidRetries = [
+      { statuses: [500], attempts: 0, delayMs: 100 },
+      { statuses: [500], attempts: 2, delayMs: -1 },
+      { statuses: [500], attempts: 2, delayMs: 100, backoff: {} },
+      { statuses: [500], attempts: 2, delayMs: 100, shouldRetry: "nope" },
+    ];
+
+    for (const retry of invalidRetries) {
+      const { pm, tests } = createPm({ body: { ok: true } });
+      (globalThis as { pm?: unknown }).pm = pm;
+      createRequestValidationSuite().execute({
+        SCENARIO: { response: { kind: "json", expect: {} } },
+        RETRY_ON_WITH_POLLING: retry,
+      });
+      expect(tests.some((test) => !test.ok)).toBe(false);
+    }
+
+    const valid = createPm({ body: { ok: true } });
+    (globalThis as { pm?: unknown }).pm = valid.pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: { response: { kind: "json", expect: {} } },
+      RETRY_ON_WITH_POLLING: {
+        statuses: [500],
+        attempts: 2,
+        delayMs: 100,
+        backoff: { multiplier: 2, maxDelayMs: 500 },
+      },
+    });
+    expect(valid.tests.some((test) => !test.ok)).toBe(false);
   });
 
   it("exposes execute as a convenience export", () => {
