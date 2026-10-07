@@ -91,13 +91,17 @@ export function assertVariableActionName(action: any, index: number): void {
     (action.variable !== undefined && action.name !== undefined) ||
     (action.variable === undefined && action.name === undefined)
   ) {
-    throw new Error(`SCENARIO.variables action ${index} needs a variable name.`);
+    throw new Error(
+      `SCENARIO.variables action ${index} needs a variable name.`,
+    );
   }
 }
 
 export function assertVariableName(variable: any, index: number): void {
   if (typeof variable !== "string" || variable.trim() === "") {
-    throw new Error(`SCENARIO.variables action ${index} needs a variable name.`);
+    throw new Error(
+      `SCENARIO.variables action ${index} needs a variable name.`,
+    );
   }
 }
 

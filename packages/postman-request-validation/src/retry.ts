@@ -95,7 +95,10 @@ export function normalizeRetryOnWithPolling(retryConfig: any): any {
   };
 }
 
-export function normalizeRetryBackoff(retryConfig: any, hasBackoff: boolean): any {
+export function normalizeRetryBackoff(
+  retryConfig: any,
+  hasBackoff: boolean,
+): any {
   if (!hasBackoff) {
     return null;
   }
@@ -168,7 +171,10 @@ export function hasValidRetryStatuses(statuses: any): boolean {
   );
 }
 
-export function getPollingDelayMs(retryConfig: any, nextAttempt: number): number {
+export function getPollingDelayMs(
+  retryConfig: any,
+  nextAttempt: number,
+): number {
   if (
     retryConfig.backoff === null ||
     retryConfig.backoff === undefined ||

@@ -196,53 +196,60 @@ export function validateArrayContains(
   expectedArrayContains: any,
   reportTest: (name: string, callback: () => void) => void,
 ): void {
-  Object.entries(expectedArrayContains).forEach(([arrayPath, expectedItems]) => {
-    const actualArray = getValueByPath(response, arrayPath);
+  Object.entries(expectedArrayContains).forEach(
+    ([arrayPath, expectedItems]) => {
+      const actualArray = getValueByPath(response, arrayPath);
 
-    reportTest(`${arrayPath} is an array`, () => {
-      validateExists(arrayPath, actualArray);
-      pm.expect(actualArray, `${arrayPath} is not an array`).to.be.an("array");
-    });
-
-    if (!Array.isArray(actualArray)) {
-      return;
-    }
-
-    reportTest(`${arrayPath} is not empty`, () => {
-      pm.expect(actualArray.length, `${arrayPath} is empty`).to.not.equal(0);
-    });
-
-    if (!Array.isArray(expectedItems)) {
-      reportTest(`${arrayPath} expected items is an array`, () => {
-        pm.expect(
-          expectedItems,
-          `${arrayPath} expected items is not an array`,
-        ).to.be.an("array");
+      reportTest(`${arrayPath} is an array`, () => {
+        validateExists(arrayPath, actualArray);
+        pm.expect(actualArray, `${arrayPath} is not an array`).to.be.an(
+          "array",
+        );
       });
-      return;
-    }
 
-    expectedItems.forEach((expectedItem: any, expectedIndex: number) => {
-      reportTest(
-        `${arrayPath} contains expected item ${expectedIndex}: ${JSON.stringify(
-          expectedItem,
-        )}`,
-        () => {
-          const found = actualArray.some((actualItem: any) =>
-            expectedItemMatches(actualItem, expectedItem),
-          );
+      if (!Array.isArray(actualArray)) {
+        return;
+      }
 
+      reportTest(`${arrayPath} is not empty`, () => {
+        pm.expect(actualArray.length, `${arrayPath} is empty`).to.not.equal(0);
+      });
+
+      if (!Array.isArray(expectedItems)) {
+        reportTest(`${arrayPath} expected items is an array`, () => {
           pm.expect(
-            found,
-            `Expected ${arrayPath} to contain ${JSON.stringify(expectedItem)}`,
-          ).to.equal(true);
-        },
-      );
-    });
-  });
+            expectedItems,
+            `${arrayPath} expected items is not an array`,
+          ).to.be.an("array");
+        });
+        return;
+      }
+
+      expectedItems.forEach((expectedItem: any, expectedIndex: number) => {
+        reportTest(
+          `${arrayPath} contains expected item ${expectedIndex}: ${JSON.stringify(
+            expectedItem,
+          )}`,
+          () => {
+            const found = actualArray.some((actualItem: any) =>
+              expectedItemMatches(actualItem, expectedItem),
+            );
+
+            pm.expect(
+              found,
+              `Expected ${arrayPath} to contain ${JSON.stringify(expectedItem)}`,
+            ).to.equal(true);
+          },
+        );
+      });
+    },
+  );
 }
 
-export function expectedItemMatches(actualItem: any, expectedItem: any): boolean {
+export function expectedItemMatches(
+  actualItem: any,
+  expectedItem: any,
+): boolean {
   if (
     actualItem === null ||
     actualItem === undefined ||

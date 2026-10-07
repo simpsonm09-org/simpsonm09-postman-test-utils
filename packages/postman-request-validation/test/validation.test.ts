@@ -551,3 +551,264 @@ describe("validationHelpers", () => {
     expect(typeof suite.execute).toBe("function");
   });
 });
+
+describe("request-validation coverage paths", () => {
+  it("resolves an expected value from a variable", () => {
+    const { pm, tests, environment } = createPm({ body: { token: "abc" } });
+    environment.set("saved", "abc");
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: {
+        response: {
+          kind: "json",
+          expect: { values: { token: { variable: "saved" } } },
+        },
+      },
+    });
+    expect(tests.every((test) => test.ok)).toBe(true);
+  });
+
+  it("checks a forbidden value", () => {
+    const { pm, tests } = createPm({ body: { state: "open" } });
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: {
+        response: { kind: "json", expect: { notValues: { state: "closed" } } },
+      },
+    });
+    expect(tests.every((test) => test.ok)).toBe(true);
+  });
+
+  it("validates a JSON schema", () => {
+    const { pm, tests } = createPm({ body: { id: "1" } });
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: {
+        response: {
+          kind: "json",
+          expect: { schema: { type: "object", required: ["id"] } },
+        },
+      },
+    });
+    expect(tests.every((test) => test.ok)).toBe(true);
+  });
+
+  it("validates a schema inside an SSE event", () => {
+    const { pm, tests } = createPm({
+      contentType: "text/event-stream",
+      text: 'data: {"id":"1"}\n\n',
+    });
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: {
+        response: {
+          kind: "sse",
+          expect: {
+            events: [
+              { data: { schema: { type: "object", required: ["id"] } } },
+            ],
+          },
+        },
+      },
+    });
+    expect(tests.every((test) => test.ok)).toBe(true);
+  });
+
+  it("clears environment and collection variables", () => {
+    const { pm, environment, collectionVariables } = createPm({
+      body: { ok: true },
+    });
+    environment.set("e", "x");
+    collectionVariables.set("c", "y");
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: {
+        response: { kind: "json", expect: {} },
+        variables: {
+          clear: [
+            { scope: "environment", variable: "e" },
+            { scope: "collection", variable: "c" },
+          ],
+        },
+      },
+    });
+    expect(environment.get("e")).toBe("");
+    expect(collectionVariables.get("c")).toBe("");
+  });
+
+  it("saves a value from an SSE event", () => {
+    const { pm, environment } = createPm({
+      contentType: "text/event-stream",
+      text: 'event: link\ndata: {"ref":"r1"}\n\n',
+    });
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: {
+        response: { kind: "sse", expect: { events: [{ data: {} }] } },
+        variables: {
+          save: [
+            {
+              scope: "environment",
+              variable: "ref",
+              source: { event: 0, data: "ref" },
+            },
+          ],
+        },
+      },
+    });
+    expect(environment.get("ref")).toBe("r1");
+  });
+
+  it("runs through the execute convenience export", () => {
+    const { pm } = createPm({ body: { ok: true } });
+    (globalThis as { pm?: unknown }).pm = pm;
+    const result = execute({
+      SCENARIO: { response: { kind: "json", expect: {} } },
+    });
+    expect(result.isNoContent).toBe(false);
+  });
+
+  it("re-queues when shouldRetry returns true", async () => {
+    const { pm, collectionVariables } = createPm({
+      status: 500,
+      body: { ok: true },
+    });
+    let scheduled: unknown = null;
+    pm.execution.setNextRequest = (...args: unknown[]) => {
+      scheduled = args[0] ?? null;
+    };
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: { response: { kind: "json", expect: {} } },
+      RETRY_ON_WITH_POLLING: {
+        statuses: [500],
+        attempts: 2,
+        delayMs: 1,
+        backoff: { multiplier: 2, maxDelayMs: 5 },
+        shouldRetry: () => true,
+      },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(scheduled).toBe("test-request");
+    expect(
+      collectionVariables.get("__request_validation_attempt_test-request"),
+    ).toBe(1);
+  });
+
+  it("stops when shouldRetry returns false", () => {
+    const { pm, tests } = createPm({ status: 500, body: { ok: true } });
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: { response: { kind: "json", expect: {} } },
+      RETRY_ON_WITH_POLLING: {
+        statuses: [500],
+        attempts: 2,
+        delayMs: 1,
+        shouldRetry: () => false,
+      },
+    });
+    expect(tests.every((test) => test.ok)).toBe(true);
+  });
+
+  it("reports a failing shouldRetry callback", () => {
+    const { pm, tests } = createPm({ status: 500, body: { ok: true } });
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: { response: { kind: "json", expect: {} } },
+      RETRY_ON_WITH_POLLING: {
+        statuses: [500],
+        attempts: 2,
+        delayMs: 1,
+        shouldRetry: () => {
+          throw new Error("boom");
+        },
+      },
+    });
+    expect(
+      tests.some(
+        (test) =>
+          test.name === "RETRY_ON_WITH_POLLING.shouldRetry failed" && !test.ok,
+      ),
+    ).toBe(true);
+  });
+
+  it("re-queues a failing dry run without shouldRetry", async () => {
+    const { pm } = createPm({ status: 500, body: { ok: false } });
+    let scheduled: unknown = null;
+    pm.execution.setNextRequest = (...args: unknown[]) => {
+      scheduled = args[0] ?? null;
+    };
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: {
+        response: { kind: "json", expect: { values: { ok: true } } },
+      },
+      RETRY_ON_WITH_POLLING: { statuses: [500], attempts: 2, delayMs: 0 },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(scheduled).toBe("test-request");
+  });
+
+  it("stops when the dry run passes and no shouldRetry is set", () => {
+    const { pm, tests } = createPm({ status: 500, body: { ok: true } });
+    (globalThis as { pm?: unknown }).pm = pm;
+    createRequestValidationSuite().execute({
+      SCENARIO: {
+        response: { kind: "json", expect: { values: { ok: true } } },
+      },
+      RETRY_ON_WITH_POLLING: { statuses: [500], attempts: 2, delayMs: 1 },
+    });
+    expect(tests.every((test) => test.ok)).toBe(true);
+  });
+
+  it("rejects invalid scenario shapes", () => {
+    const configs: unknown[] = [
+      null,
+      { SCENARIO: null },
+      { SCENARIO: {}, NOPE: true },
+      { SCENARIO: { response: 1 } },
+      { SCENARIO: { response: { kind: "xml" } } },
+      { SCENARIO: { status: 1 } },
+      { SCENARIO: { response: { kind: "json", expect: 1 } } },
+      { SCENARIO: { response: { kind: "json", expect: { events: [] } } } },
+      { SCENARIO: { response: { kind: "json", expect: { schema: 1 } } } },
+      { SCENARIO: { response: { kind: "json", expect: { values: 1 } } } },
+      {
+        SCENARIO: {
+          response: { kind: "json", expect: { values: { "": 1 } } },
+        },
+      },
+      {
+        SCENARIO: {
+          response: { kind: "json", expect: { arrays: { list: 1 } } },
+        },
+      },
+      { SCENARIO: { response: { kind: "sse", expect: { events: 1 } } } },
+      { SCENARIO: { response: { kind: "sse", expect: { events: [1] } } } },
+      {
+        SCENARIO: {
+          response: { kind: "sse", expect: { events: [{ name: "" }] } },
+        },
+      },
+      {
+        SCENARIO: {
+          response: { kind: "sse", expect: { events: [{ data: 1 }] } },
+        },
+      },
+      { SCENARIO: { variables: 1 } },
+      { SCENARIO: { variables: { save: 1 } } },
+    ];
+
+    for (const config of configs) {
+      const { pm, tests } = createPm({ body: { ok: true } });
+      (globalThis as { pm?: unknown }).pm = pm;
+      createRequestValidationSuite().execute(config);
+      expect(tests).toEqual([
+        expect.objectContaining({
+          name: "SCENARIO configuration is valid",
+          ok: false,
+        }),
+      ]);
+    }
+  });
+});

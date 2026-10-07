@@ -54,10 +54,7 @@ export function compileScenarioConfig(rawConfig: any): any {
     response.kind,
   );
 
-  const variables = compileScenarioVariables(
-    scenario.variables,
-    response.kind,
-  );
+  const variables = compileScenarioVariables(scenario.variables, response.kind);
 
   return {
     kind: response.kind,

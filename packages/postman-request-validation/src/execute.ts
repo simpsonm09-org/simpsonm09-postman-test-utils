@@ -1,8 +1,8 @@
 /** Runs the compiled scenario against the current Postman response. */
 
 import { runScenarioAssertions, runScenarioEvents } from "./assertions.js";
-import { decodeScenarioSse, normalizeContentType } from "./sse.js";
 import type { ScenarioSseEvent } from "./sse.js";
+import { decodeScenarioSse, normalizeContentType } from "./sse.js";
 import type { ValidationResult } from "./types.js";
 import { processScenarioVariables } from "./variables.js";
 
@@ -56,12 +56,7 @@ export function executeScenarioValidations(
     runScenarioEvents(context.events, compiled.expectations.events, reportTest);
   }
 
-  processScenarioVariables(
-    context,
-    compiled,
-    reportTest,
-    applyVariableChanges,
-  );
+  processScenarioVariables(context, compiled, reportTest, applyVariableChanges);
 
   return {
     response: scenarioResult(context, compiled),
@@ -119,7 +114,9 @@ export function scenarioResult(context: any, compiled: any): any {
   return null;
 }
 
-export function readScenarioResponseContext(kind: string | null): ResponseContext {
+export function readScenarioResponseContext(
+  kind: string | null,
+): ResponseContext {
   const isNoContent = pm.response.code === 204;
   const contentType = pm.response.headers?.get("Content-Type") || "";
   const context: ResponseContext = {

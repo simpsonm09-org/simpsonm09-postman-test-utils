@@ -123,7 +123,10 @@ export function parseScenarioSseField(line: string): {
   return { field, value };
 }
 
-export function applyScenarioRetry(value: string, parsed: { retry?: number }): void {
+export function applyScenarioRetry(
+  value: string,
+  parsed: { retry?: number },
+): void {
   if (/^\d+$/.test(value)) {
     parsed.retry = Number(value);
   }
