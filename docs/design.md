@@ -25,7 +25,9 @@ for offline runs.
 | | `src/config.ts` | CLI argument parsing and config file loading. |
 | | `src/cli.ts` | The `postman-test-utils` bin. |
 | `postman-secrets` | `src/*.ts` | Env, Vault, and Infisical providers, the branded `SecretValue`, and `resolveSecrets`. |
-| `postman-request-validation` | `src/index.ts` | The validation suite as one self-contained factory, plus the prelude loader. |
+| `postman-request-validation` | `src/index.ts` | Public API: the factory, `execute`, and `validationHelpers`. |
+| | `src/suite.ts` | The suite factory. `prelude.ts` serializes it with the helper modules. |
+| | `src/{compile,variables-compile,sse,execute,assertions,variables,retry,internal}.ts` | Cohesive validators and guards the factory and the prelude share. |
 
 ## Decisions
 
@@ -44,11 +46,13 @@ deliberately deferred so the three packages release together from one pipeline.
 
 **The validation suite is one factory, serialized for the prelude.** `pm.require`
 loads the package root, and the newman sandbox needs the code as a script
-prelude. `validationHelpers` calls `Function.prototype.toString` on the factory
-to build the prelude, so both loaders share one source and cannot drift. Every
-helper lives inside the factory for this reason. A workspace test asserts the
-source and the built bundle contain no Node builtins. This is
-`principle-model-the-domain` and `principle-type-system-discipline`.
+prelude. `validationHelpers` concatenates `Function.prototype.toString` of every
+helper module with the factory to build the prelude, so both loaders share one
+source and cannot drift. A helper may reference only `pm`, JavaScript globals,
+and other helpers, because only the concatenated source ships; it must never
+reference a module-scope binding. A workspace test asserts the source and the
+built bundle contain no Node builtins. This is `principle-model-the-domain` and
+`principle-type-system-discipline`.
 
 **Secrets are branded and unwrapped once.** `SecretValue` cannot be assigned to a
 plain `string` without `reveal`. That removes the temp-file write in the old

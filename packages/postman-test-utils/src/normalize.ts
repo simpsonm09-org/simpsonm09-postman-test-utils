@@ -4,6 +4,8 @@ import { isRecord } from "./internal.js";
 import type {
   CollectionSource,
   NormalizedRunRequest,
+  PostmanCollection,
+  PostmanVariables,
   ScriptListener,
   ValidationRequest,
   VariablesSource,
@@ -11,12 +13,16 @@ import type {
 
 const SECRET_PROVIDERS = ["env", "vault", "infisical"] as const;
 
+function isCollectionObject(value: unknown): value is PostmanCollection {
+  return isRecord(value) && Array.isArray(value.item);
+}
+
 function readCollection(value: unknown): CollectionSource {
   if (typeof value === "string" && value.trim() !== "") {
     return value;
   }
-  if (isRecord(value) && Array.isArray(value.item)) {
-    return value as unknown as CollectionSource;
+  if (isCollectionObject(value)) {
+    return value;
   }
   throw new InvalidRunRequestError(
     "collection",
@@ -24,12 +30,16 @@ function readCollection(value: unknown): CollectionSource {
   );
 }
 
+function isVariablesObject(value: unknown): value is PostmanVariables {
+  return isRecord(value) && Array.isArray(value.values);
+}
+
 function readVariables(value: unknown, field: string): VariablesSource {
   if (typeof value === "string" && value.trim() !== "") {
     return value;
   }
-  if (isRecord(value) && Array.isArray(value.values)) {
-    return value as unknown as VariablesSource;
+  if (isVariablesObject(value)) {
+    return value;
   }
   throw new InvalidRunRequestError(
     field,
