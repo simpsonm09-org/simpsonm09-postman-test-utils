@@ -3,13 +3,11 @@ import type {
   PostmanCollection,
   PostmanEvent,
   PostmanItem,
+  ScriptHelper,
   ScriptListener,
 } from "./types.js";
 
-export interface ScriptHelper {
-  name: string;
-  body: string;
-}
+export type { ScriptHelper };
 
 const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
