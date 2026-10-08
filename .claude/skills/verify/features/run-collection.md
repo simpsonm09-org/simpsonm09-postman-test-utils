@@ -26,7 +26,7 @@ Preconditions:
 - `newman` is installed (it is a dev dependency here).
 
 - **Help.** Run `node packages/postman-test-utils/dist/cli.js --help`. Exit `0` and the output contains `Usage: postman-test-utils run`.
-- **Passing run.** Run `node .opencode/skills/verify/scripts/drive.mjs --out artifacts/verify/run-collection`. The helper copies the example collection and environment into scratch, starts a loopback server, and runs the CLI. `evidence.json` key `run_success.exitCode` is `0` and `run_success.stdout` matches `newman: 1 iteration(s), 1 request(s), 1 assertion(s), 0 failed`.
+- **Passing run.** Run `node .claude/skills/verify/scripts/drive.mjs --out artifacts/verify/run-collection`. The helper copies the example collection and environment into scratch, starts a loopback server, and runs the CLI. `evidence.json` key `run_success.exitCode` is `0` and `run_success.stdout` matches `newman: 1 iteration(s), 1 request(s), 1 assertion(s), 0 failed`.
 - **Failing run.** The helper also runs a collection whose test asserts `true === false`. `evidence.json` key `run_failure.exitCode` is `1` and `run_failure.stderr` contains `always fails`.
 - **Proof.** Keep `artifacts/verify/run-collection/evidence.json` and `transcript.txt`. The transcript records each command and its real output.
 

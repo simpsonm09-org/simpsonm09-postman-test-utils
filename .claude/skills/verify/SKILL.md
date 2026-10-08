@@ -39,7 +39,7 @@ If it fails, stop and re-run Launch rather than driving a stale or missing build
 Run the shipped helper from the repository root after Launch:
 
 ```bash
-node .opencode/skills/verify/scripts/drive.mjs --out artifacts/verify/postman-test-utils
+node .claude/skills/verify/scripts/drive.mjs --out artifacts/verify/postman-test-utils
 ```
 
 The helper starts a loopback server, copies the example fixtures into a scratch directory, then drives every mapped surface through the built artifacts:
@@ -56,7 +56,7 @@ It writes `evidence.json` and `transcript.txt` and exits non-zero when any expec
 For a hand-run that needs no server, bake the prelude from the example config:
 
 ```bash
-node packages/postman-test-utils/dist/cli.js run --emit artifacts/verify/postman-test-utils/emitted.json --config .opencode/skills/verify/scripts/example/postman-test-utils.config.json
+node packages/postman-test-utils/dist/cli.js run --emit artifacts/verify/postman-test-utils/emitted.json --config .claude/skills/verify/scripts/example/postman-test-utils.config.json
 ```
 
 The installed-layout check is the workspace smoke test:
