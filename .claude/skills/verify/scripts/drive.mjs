@@ -4,7 +4,7 @@
 // Build first, then run from the repository root:
 //
 //   npm ci && npm run build
-//   node .opencode/skills/verify/scripts/drive.mjs --out artifacts/verify/postman-test-utils
+//   node .claude/skills/verify/scripts/drive.mjs --out artifacts/verify/postman-test-utils
 //
 // The helper starts its own loopback server, copies the example fixtures into a
 // scratch directory, drives the built CLI and the public library API, and exits
