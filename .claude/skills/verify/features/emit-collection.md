@@ -24,9 +24,9 @@ Preconditions:
 - The Doctor check passes.
 - The config file names a collection; `--emit` needs no server.
 
-- **Bake the prelude.** Run `node .opencode/skills/verify/scripts/drive.mjs --out artifacts/verify/emit-collection`. `evidence.json` key `emit.exitCode` is `0`, `emit.preludePresent` is `true`, and `emit.execLines` is at least `2` (prelude then the original script).
+- **Bake the prelude.** Run `node .claude/skills/verify/scripts/drive.mjs --out artifacts/verify/emit-collection`. `evidence.json` key `emit.exitCode` is `0`, `emit.preludePresent` is `true`, and `emit.execLines` is at least `2` (prelude then the original script).
 - **Never write a secret.** The helper emits from a config that declares a `secrets` binding for `PTU_VERIFY_SECRET`. `evidence.json` key `emit_secret.secretAbsent` is `true`, and `artifacts/verify/emit-collection/emitted-secret-free.postman_collection.json` does not contain the fixture value.
-- **Hand-run.** Run `node packages/postman-test-utils/dist/cli.js run --emit artifacts/verify/emit-collection/emitted.json --config .opencode/skills/verify/scripts/example/postman-test-utils.config.json`. It prints `wrote artifacts/verify/emit-collection/emitted.json`.
+- **Hand-run.** Run `node packages/postman-test-utils/dist/cli.js run --emit artifacts/verify/emit-collection/emitted.json --config .claude/skills/verify/scripts/example/postman-test-utils.config.json`. It prints `wrote artifacts/verify/emit-collection/emitted.json`.
 - **Proof.** Keep `emitted.postman_collection.json` and `emitted-secret-free.postman_collection.json` alongside `evidence.json`. Open the emitted file and confirm `item[0].event[0].script.exec[0]` contains `requestValidation`.
 
 ## Gotchas
