@@ -38,6 +38,7 @@ function runCli(args, extraEnv = {}) {
     const child = spawn(process.execPath, [cliPath, ...args], {
       cwd: repoRoot,
       env: { ...process.env, ...extraEnv },
+      windowsHide: true,
     });
     let stdout = "";
     let stderr = "";

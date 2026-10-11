@@ -21,7 +21,7 @@ async function installPackage(sourceDir, targetDir) {
 
 function runCli(args, cwd) {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [cli, ...args], { cwd });
+    const child = spawn(process.execPath, [cli, ...args], { cwd, windowsHide: true });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk) => (stdout += chunk));

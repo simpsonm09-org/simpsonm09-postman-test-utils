@@ -10,6 +10,7 @@ import {
   SecretResolutionError,
   vaultProvider,
 } from "../src/index.js";
+import { defaultCommandRunner } from "../src/internal.js";
 
 interface Call {
   command: string;
@@ -160,5 +161,25 @@ describe("resolveSecrets", () => {
         },
       ),
     ).rejects.toThrow(SecretResolutionError);
+  });
+});
+
+describe("defaultCommandRunner", () => {
+  it("resolves with the child's stdout and stderr on exit 0", async () => {
+    await expect(
+      defaultCommandRunner(process.execPath, [
+        "-e",
+        "process.stdout.write('ok')",
+      ]),
+    ).resolves.toEqual({ stdout: "ok", stderr: "" });
+  });
+
+  it("rejects with the exit code and stderr on a non-zero exit", async () => {
+    const run = defaultCommandRunner(process.execPath, [
+      "-e",
+      "process.stderr.write('boom'); process.exit(3)",
+    ]);
+    await expect(run).rejects.toThrow(SecretResolutionError);
+    await expect(run).rejects.toThrow("exited with code 3. boom");
   });
 });

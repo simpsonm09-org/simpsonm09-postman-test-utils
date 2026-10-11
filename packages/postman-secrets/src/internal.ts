@@ -36,7 +36,10 @@ export function findExecutable(
  */
 export const defaultCommandRunner: CommandRunner = (command, args) =>
   new Promise((resolve, reject) => {
-    const child = spawn(command, [...args], { shell: false });
+    const child = spawn(command, [...args], {
+      shell: false,
+      windowsHide: true,
+    });
     let stdout = "";
     let stderr = "";
     child.stdout?.on("data", (chunk: Buffer) => {
