@@ -37,6 +37,7 @@ for (const name of packages) {
     cwd: repo,
     stdio: "inherit",
     shell: process.platform === "win32",
+    windowsHide: true,
   });
 }
 
