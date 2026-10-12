@@ -15,6 +15,14 @@ install:
 lint:
     mise exec -- flint run --full
 
+# Fix what the linters can fix.
+lint-fix:
+    mise exec -- flint run --fix
+
+# Run the AI-slop gate.
+aislop:
+    npx --yes aislop@0.16.1 ci
+
 # Typecheck every package.
 typecheck:
     npm run typecheck
