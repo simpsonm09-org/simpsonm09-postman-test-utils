@@ -15,29 +15,29 @@ concurrency:
 jobs:
   lint:
     if: github.repository_owner == 'simpsonm09-org'
-    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/lint.yml@334d3660fb8fb7cec5e24b61be68b7535774313d # repo-standard main
+    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/lint.yml@864a6a7cb1f6b89978740fbd1a139cd965f1d408 # repo-standard main
   aislop:
     if: github.repository_owner == 'simpsonm09-org'
     permissions:
       contents: read
       security-events: write
-    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/aislop.yml@334d3660fb8fb7cec5e24b61be68b7535774313d # repo-standard main
+    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/aislop.yml@864a6a7cb1f6b89978740fbd1a139cd965f1d408 # repo-standard main
   security:
     if: github.repository_owner == 'simpsonm09-org'
     permissions:
       contents: read
       security-events: write
-    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/security.yml@334d3660fb8fb7cec5e24b61be68b7535774313d # repo-standard main
+    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/security.yml@864a6a7cb1f6b89978740fbd1a139cd965f1d408 # repo-standard main
   standard:
     if: github.repository_owner == 'simpsonm09-org'
     permissions:
       contents: read
-    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/standard.yml@334d3660fb8fb7cec5e24b61be68b7535774313d # repo-standard main
+    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/standard.yml@864a6a7cb1f6b89978740fbd1a139cd965f1d408 # repo-standard main
   coverage:
     if: github.repository_owner == 'simpsonm09-org'
     permissions:
       contents: read
-    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/coverage.yml@334d3660fb8fb7cec5e24b61be68b7535774313d # repo-standard main
+    uses: simpsonm09-org/simpsonm09-repo-standard/.github/workflows/coverage.yml@864a6a7cb1f6b89978740fbd1a139cd965f1d408 # repo-standard main
 
   test:
     if: github.repository_owner == 'simpsonm09-org'
