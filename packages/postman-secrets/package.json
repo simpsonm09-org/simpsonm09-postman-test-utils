@@ -22,12 +22,12 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/simpsonm09-projects/simpsonm09-postman-test-utils.git",
+    "url": "git+https://github.com/simpsonm09-projects/postman-test-utils.git",
     "directory": "packages/postman-secrets"
   },
-  "homepage": "https://github.com/simpsonm09-projects/simpsonm09-postman-test-utils#readme",
+  "homepage": "https://github.com/simpsonm09-projects/postman-test-utils#readme",
   "bugs": {
-    "url": "https://github.com/simpsonm09-projects/simpsonm09-postman-test-utils/issues"
+    "url": "https://github.com/simpsonm09-projects/postman-test-utils/issues"
   },
   "publishConfig": {
     "access": "public"

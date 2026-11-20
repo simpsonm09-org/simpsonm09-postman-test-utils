@@ -2,7 +2,7 @@
 
 Run Postman collections offline through newman, resolve secrets from a secret manager, and validate responses with one shared suite. The same suite also loads inside Postman through `pm.require`.
 
-This repository lives in `simpsonm09-projects/simpsonm09-postman-test-utils`. Work happens on a branch
+This repository lives in `simpsonm09-projects/postman-test-utils`. Work happens on a branch
 with a pull request into `main`.
 See [`repo-standard`](https://github.com/simpsonm09-projects/simpsonm09-repo-standard)
 for the branch model and the protection rules.

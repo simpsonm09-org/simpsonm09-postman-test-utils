@@ -18,7 +18,7 @@ jobs:
           persist-credentials: false
 
       - name: Run the collection
-        uses: simpsonm09/simpsonm09-postman-test-utils@v1
+        uses: simpsonm09-projects/postman-test-utils@v1
         with:
           command: '--config ./postman-test-utils.config.json'
         env:
