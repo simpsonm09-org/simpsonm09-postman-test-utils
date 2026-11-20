@@ -101,6 +101,6 @@ newman run ./collection.with-validation.json -e ./environment.json
 
 ## Test the GitHub Action
 
-The action references `simpsonm09/simpsonm09-postman-test-utils@v1` and runs
+The action references `simpsonm09-projects/postman-test-utils@v1` and runs
 `npx postman-test-utils@latest`, so it needs the engine on npm and a `v1` tag on
 the repository. See `docs/examples/`.

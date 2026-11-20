@@ -95,7 +95,7 @@ See [`../packages/postman-request-validation/README.md`](../packages/postman-req
 The repository ships a composite action. It installs the package and runs the CLI.
 
 ```yaml
-- uses: simpsonm09/simpsonm09-postman-test-utils@v1
+- uses: simpsonm09-projects/postman-test-utils@v1
   with:
     command: '--config ./postman-test-utils.config.json'
   env:
